@@ -1,0 +1,15 @@
+/Users/awu/Desktop/Pomona/MS125/final/target/debug/deps/tiff-f7d6b3000f54d333.rmeta: /Users/awu/.cargo/registry/src/github.com-1ecc6299db9ec823/tiff-0.7.1/src/lib.rs /Users/awu/.cargo/registry/src/github.com-1ecc6299db9ec823/tiff-0.7.1/src/bytecast.rs /Users/awu/.cargo/registry/src/github.com-1ecc6299db9ec823/tiff-0.7.1/src/decoder/mod.rs /Users/awu/.cargo/registry/src/github.com-1ecc6299db9ec823/tiff-0.7.1/src/decoder/ifd.rs /Users/awu/.cargo/registry/src/github.com-1ecc6299db9ec823/tiff-0.7.1/src/decoder/stream.rs /Users/awu/.cargo/registry/src/github.com-1ecc6299db9ec823/tiff-0.7.1/src/encoder/mod.rs /Users/awu/.cargo/registry/src/github.com-1ecc6299db9ec823/tiff-0.7.1/src/encoder/colortype.rs /Users/awu/.cargo/registry/src/github.com-1ecc6299db9ec823/tiff-0.7.1/src/encoder/tiff_value.rs /Users/awu/.cargo/registry/src/github.com-1ecc6299db9ec823/tiff-0.7.1/src/encoder/writer.rs /Users/awu/.cargo/registry/src/github.com-1ecc6299db9ec823/tiff-0.7.1/src/error.rs /Users/awu/.cargo/registry/src/github.com-1ecc6299db9ec823/tiff-0.7.1/src/tags.rs
+
+/Users/awu/Desktop/Pomona/MS125/final/target/debug/deps/tiff-f7d6b3000f54d333.d: /Users/awu/.cargo/registry/src/github.com-1ecc6299db9ec823/tiff-0.7.1/src/lib.rs /Users/awu/.cargo/registry/src/github.com-1ecc6299db9ec823/tiff-0.7.1/src/bytecast.rs /Users/awu/.cargo/registry/src/github.com-1ecc6299db9ec823/tiff-0.7.1/src/decoder/mod.rs /Users/awu/.cargo/registry/src/github.com-1ecc6299db9ec823/tiff-0.7.1/src/decoder/ifd.rs /Users/awu/.cargo/registry/src/github.com-1ecc6299db9ec823/tiff-0.7.1/src/decoder/stream.rs /Users/awu/.cargo/registry/src/github.com-1ecc6299db9ec823/tiff-0.7.1/src/encoder/mod.rs /Users/awu/.cargo/registry/src/github.com-1ecc6299db9ec823/tiff-0.7.1/src/encoder/colortype.rs /Users/awu/.cargo/registry/src/github.com-1ecc6299db9ec823/tiff-0.7.1/src/encoder/tiff_value.rs /Users/awu/.cargo/registry/src/github.com-1ecc6299db9ec823/tiff-0.7.1/src/encoder/writer.rs /Users/awu/.cargo/registry/src/github.com-1ecc6299db9ec823/tiff-0.7.1/src/error.rs /Users/awu/.cargo/registry/src/github.com-1ecc6299db9ec823/tiff-0.7.1/src/tags.rs
+
+/Users/awu/.cargo/registry/src/github.com-1ecc6299db9ec823/tiff-0.7.1/src/lib.rs:
+/Users/awu/.cargo/registry/src/github.com-1ecc6299db9ec823/tiff-0.7.1/src/bytecast.rs:
+/Users/awu/.cargo/registry/src/github.com-1ecc6299db9ec823/tiff-0.7.1/src/decoder/mod.rs:
+/Users/awu/.cargo/registry/src/github.com-1ecc6299db9ec823/tiff-0.7.1/src/decoder/ifd.rs:
+/Users/awu/.cargo/registry/src/github.com-1ecc6299db9ec823/tiff-0.7.1/src/decoder/stream.rs:
+/Users/awu/.cargo/registry/src/github.com-1ecc6299db9ec823/tiff-0.7.1/src/encoder/mod.rs:
+/Users/awu/.cargo/registry/src/github.com-1ecc6299db9ec823/tiff-0.7.1/src/encoder/colortype.rs:
+/Users/awu/.cargo/registry/src/github.com-1ecc6299db9ec823/tiff-0.7.1/src/encoder/tiff_value.rs:
+/Users/awu/.cargo/registry/src/github.com-1ecc6299db9ec823/tiff-0.7.1/src/encoder/writer.rs:
+/Users/awu/.cargo/registry/src/github.com-1ecc6299db9ec823/tiff-0.7.1/src/error.rs:
+/Users/awu/.cargo/registry/src/github.com-1ecc6299db9ec823/tiff-0.7.1/src/tags.rs:
