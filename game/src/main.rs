@@ -8,43 +8,35 @@ use engine::sprite::{Action, Character, Sprite};
 use engine::tiles::*;
 use engine::types::*;
 
-const PLAYER_WIDTH: i32 = 20;
-const PLAYER_HEIGHT: i32 = 32;
 pub const WIDTH: usize = 320;
 pub const HEIGHT: usize = 320;
+
+const PSZ: Vec2i = Vec2i { x: 20, y: 32 };
+const PPOS: Vec2i = Vec2i { x: (WIDTH / 2) as i32 + (PSZ.x / 2), y: (HEIGHT / 2) as i32 + (PSZ.y / 2) };
+
 const TILE_SZ: i32 = 16;
 
 struct Assets {
     spritesheet: Rc<Image>,
     numsheet: Rc<Image>,
     textsheet: Rc<Image>,
-    tilemap: Tilemap,
 }
 
 struct State {
-    p: PlayerState,
+    map: Tilemap,
+    facing: Vec<bool>, // up/down, right/left
+    pos: Pos,
 }
 
 impl State {
-    pub fn new() -> Self {
-        let p = PlayerState::new();
+    pub fn new(map: Tilemap) -> Self {
+        let facing = vec![true, true];
+        let pos = Pos { x: 10., y: 10. }; // REPLACE
 
         Self {
-            p,
-        }
-    }
-}
-
-struct PlayerState {
-    pos: Pos,
-    vel: f32
-}
-
-impl PlayerState {
-    pub fn new() -> Self {
-        Self {
-            pos: Pos { x: 0., y: 0. },
-            vel: 0.05
+            map,
+            facing: vec![true, true],
+            pos
         }
     }
 }
@@ -56,39 +48,43 @@ fn main() {
 }
 
 // [Up, Left, Right, Down]
-fn update_player(ps: &mut PlayerState, now_keys: &[bool], prev_keys: &[bool]) {
+fn update_state(s: &mut State, now_keys: &[bool], prev_keys: &[bool]) {
 
-    if now_keys[0]
+    if now_keys[0] // UP
     {
-        ps.pos.y -= ps.vel
+        s.map.translate_y(-1);
+        s.facing[0] = true;
     }
 
-    if now_keys[1]
+    if now_keys[1] // LEFT
     {
-        ps.pos.x -= ps.vel
+        s.map.translate_x(-1);
+        s.facing[1] = false;
     }
 
-    if now_keys[2]
+    if now_keys[2] // RIGHT
     {
-        ps.pos.x += ps.vel
+        s.map.translate_x(1);
+        s.facing[1] = true;
     }
 
-    if now_keys[3]
+    if now_keys[3] // DOWN
     {
-        ps.pos.y += ps.vel
+        s.map.translate_y(1);
+        s.facing[0] = false;
     }
 }
 
-fn render_player(state: &mut PlayerState, assets: &mut Assets, fb2d: &mut Image) {
-    let mut temp = Rect {
-        pos: Vec2i { x: 0, y: 0 },
-        sz: Vec2i { x: PLAYER_WIDTH, y: PLAYER_HEIGHT },
+fn render_player(state: &mut State, assets: &mut Assets, fb2d: &mut Image) {
+    let temp = Rect {
+        pos: Vec2i { x: 10, y: 10 },
+        sz: PSZ,
     };
 
     fb2d.bitblt(
         &assets.spritesheet,
         temp,
-        state.pos.get(),
+        Vec2i { x: 800, y: 800 },
         false,
     );
 }
@@ -98,16 +94,16 @@ impl engine::eng::Game for Game {
     type State = State;
     fn new() -> (State, Assets) {
         let tilesheet = Rc::new(Image::from_file(std::path::Path::new(
-            "content/tilesheet.png",
+            "game/content/tilesheet.png",
         )));
         let spritesheet = Rc::new(Image::from_file(std::path::Path::new(
-            "content/spritesheet.png",
+            "game/content/spritesheet.png",
         )));
         let numsheet = Rc::new(Image::from_file(std::path::Path::new(
-            "content/numsheet.png",
+            "game/content/numsheet.png",
         )));
         let textsheet = Rc::new(Image::from_file(std::path::Path::new(
-            "content/textsheet.png",
+            "game/content/textsheet.png",
         ))); 
         let tileset = Rc::new(Tileset::new(
             vec![
@@ -122,38 +118,22 @@ impl engine::eng::Game for Game {
                 Tile { solid: false },
                 Tile { solid: false },
             ],
-            tilesheet.clone(),
+            tilesheet,
         ));
         let map = Tilemap::new(
-            Vec2i { x: 0, y: 0 },
-            (20, 20),
-            tileset.clone(),
-            vec![
-                6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
-                6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
-                6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
-                6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
-                6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
-                6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
-                6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
-                6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
-                6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
-                6, 0, 0, 0, 0, 0, 0, 0, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 0, 0, 0, 0, 0, 0, 0, 0,
-                6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 6, 6, 6, 6, 6, 6, 6,
-                6, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 6, 6, 6, 6, 6, 6, 6, 6, 0, 0, 0, 0, 0, 0, 0,
-                0, 0, 0, 0, 8, 5, 5, 5, 5, 5, 5, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2,
-                2, 2, 2, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
-                4, 4, 4, 4, 4, 4, 4, 4,
-            ],
+            Vec2i { x: -160, y: -160 },
+            (40, 40),
+            tileset,
+            (0_usize..1600).map(|x| (x + ((x / 40 + 1) % 2)) % 2).collect::<Vec<usize>>(),
         );
 
         let assets = Assets {
             spritesheet,
             numsheet,
             textsheet,
-            tilemap: map,
         };
-        let state = State::new();
+
+        let state = State::new(map);
         (state, assets)
     }
 
@@ -174,11 +154,12 @@ impl engine::eng::Game for Game {
             prev_keys[VirtualKeyCode::Down as usize],
         ];
 
-        update_player(&mut state.p, &now_keys, &prev_keys);
+        update_state(state, &now_keys, &prev_keys);
     }
 
     fn render(state: &mut State, assets: &mut Assets, fb2d: &mut Image) {
-        assets.tilemap.draw(fb2d);
-        render_player(&mut state.p, assets, fb2d);
+        render_player(state, assets, fb2d);
+        state.map.draw(fb2d);
+        render_player(state, assets, fb2d);
     }
 }

@@ -78,7 +78,7 @@ impl Tilemap {
         Self {
             position,
             dims,
-            tileset: tileset,
+            tileset,
             map: map.into_iter().map(TileID).collect(),
         }
     }
@@ -104,6 +104,18 @@ impl Tilemap {
     pub fn tile_at(&self, posn: Vec2i) -> (Vec2i, Tile) {
         let (pos, tile_id) = self.tile_id_at(posn);
         (pos, self.tileset[tile_id])
+    }
+
+    pub fn translate(&mut self, delta: Vec2i) {
+        self.position = self.position + delta;
+    }
+
+    pub fn translate_x(&mut self, delta: i32) {
+        self.position.x += delta;
+    }
+
+    pub fn translate_y(&mut self, delta: i32) {
+        self.position.y += delta;
     }
 
     pub fn draw(&self, screen: &mut Image) {
