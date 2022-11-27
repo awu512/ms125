@@ -36,12 +36,13 @@ use vulkano::swapchain::{self, AcquireError, Surface, Swapchain, SwapchainCreati
 use vulkano::sync::{self, FlushError, GpuFuture};
 use vulkano::Version;
 use vulkano_win::VkSurfaceBuild;
+use winit::dpi::{PhysicalSize};
 use winit::event::{Event, WindowEvent};
 use winit::event_loop::{ControlFlow, EventLoop};
 use winit::window::{Window, WindowBuilder};
 
-pub const WIDTH: usize = 320;
-pub const HEIGHT: usize = 320;
+pub const WIDTH: usize = 176;
+pub const HEIGHT: usize = 176;
 
 pub trait Game {
     type State;
@@ -189,7 +190,11 @@ impl Vk {
         let required_extensions = vulkano_win::required_extensions();
         let instance = Instance::new(None, Version::V1_1, &required_extensions, None).unwrap();
         let event_loop = EventLoop::new();
+        let win_size = PhysicalSize { width: 1408_i32, height: 1408_i32 };
         let surface = WindowBuilder::new()
+            .with_resizable(false)
+            .with_inner_size(win_size)
+            .with_title("Game")
             .build_vk_surface(&event_loop, instance.clone())
             .unwrap();
 
@@ -409,8 +414,8 @@ impl FBState {
         let fb2d_texture = ImageView::new(fb2d_image.clone()).unwrap();
         let fb2d_sampler = Sampler::new(
             vk.device.clone(),
-            Filter::Linear,
-            Filter::Linear,
+            Filter::Nearest,
+            Filter::Nearest,
             MipmapMode::Nearest,
             SamplerAddressMode::Repeat,
             SamplerAddressMode::Repeat,
