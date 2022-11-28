@@ -11,6 +11,7 @@ use engine::types::*;
 const SSZ: Vec2i = Vec2i { x: WIDTH as i32, y: HEIGHT as i32}; // SCREEN SIZE
 const TSZ: i32 = 16; // TILE SIZE
 
+const START: Pos = Pos { x: 10, y: 10 };
 const PPOS: Vec2i = Vec2i { x: (SSZ.x / 2) - (PSZ.x / 2), y: (SSZ.y / 2) - (PSZ.y / 2) };
 
 const DOWN: usize = 0;
@@ -31,18 +32,15 @@ struct State {
     p_anims: AnimationSet,
     p_sprite: Sprite,
 
-    tapc: [u8; 4],
     movec: u8,
-    move_lock: bool,
+    cur_dir: usize,
+    next_dir: Option<usize>,
 
-    dir: usize,
     pos: Pos,
 }
 
 impl State {
     pub fn new(map: Tilemap) -> Self {
-        let pos = Pos { x: 10., y: 10. }; // TODO
-
         let p_anims = AnimationSet::new(1);
         let p_sprite = Sprite {
             animation_state: p_anims.play_animation(Action::StandD),
@@ -56,11 +54,10 @@ impl State {
             map,
             p_anims,
             p_sprite,
-            tapc: [0; 4],
             movec: 0,
-            move_lock: false,
-            dir: 0,
-            pos
+            cur_dir: DOWN,
+            next_dir: None,
+            pos: START,
         }
     }
 
@@ -77,85 +74,65 @@ fn main() {
 
 // [Down, Up, Left, Right, Space]
 fn update_state(s: &mut State, now_keys: &[bool], prev_keys: &[bool]) {
+    // RELEASED -> clear next_dir
+    if !now_keys[DOWN] && prev_keys[DOWN] && s.next_dir == Some(DOWN) {
+        s.next_dir = None;
+    }
+    if !now_keys[UP] && prev_keys[UP] && s.next_dir == Some(UP) {
+        s.next_dir = None;
+    }
+    if !now_keys[LEFT] && prev_keys[LEFT] && s.next_dir == Some(LEFT) {
+        s.next_dir = None;
+    }
+    if !now_keys[RIGHT] && prev_keys[RIGHT] && s.next_dir == Some(RIGHT) {
+        s.next_dir = None;
+    }
 
-    // GESTURE: RELEASE
-    if !now_keys[DOWN] && prev_keys[DOWN] && s.dir == DOWN {
-        s.move_lock = false;
-    }
-    if !now_keys[UP] && prev_keys[UP] && s.dir == UP {
-        s.move_lock = false;
-    }
-    if !now_keys[LEFT] && prev_keys[LEFT] && s.dir == LEFT {
-        s.move_lock = false;
-    }
-    if !now_keys[RIGHT] && prev_keys[RIGHT] && s.dir == RIGHT {
-        s.move_lock = false;
+    // PRESSED -> set next_dir
+    if s.next_dir == None {
+        if now_keys[DOWN] { s.next_dir = Some(DOWN) }
+        if now_keys[UP] { s.next_dir = Some(UP) }
+        if now_keys[LEFT] { s.next_dir = Some(LEFT) }
+        if now_keys[RIGHT] { s.next_dir = Some(RIGHT) }
     }
 
+    // MOVEMENT DONE
     if s.movec == 0 {
+        if s.next_dir == None { // NO HELD KEY
+            // stand in current direction
+            match s.cur_dir {
+                DOWN => s.anim(Action::StandD),
+                UP => s.anim(Action::StandU),
+                LEFT => s.anim(Action::StandL),
+                RIGHT => s.anim(Action::StandR),
+                _ => ()
+            }
+        } else {
+            s.movec = 32;
 
-        // GESTURE: TAP
-        if !now_keys[DOWN] && s.tapc[DOWN] > 0 {
-            s.anim(Action::StandD);
-        }
-        if !now_keys[UP] && s.tapc[UP] > 0 {
-            s.anim(Action::StandU);
-        }
-        if !now_keys[LEFT] && s.tapc[LEFT] > 0 {
-            s.anim(Action::StandL);
-        }
-        if !now_keys[RIGHT] && s.tapc[RIGHT] > 0 {
-            s.anim(Action::StandR);
-        }
+            // if same dir, do nothing
+            if s.cur_dir != s.next_dir.unwrap() || s.p_sprite.animation_state.action.is_standing() { 
+                s.cur_dir = s.next_dir.unwrap();
+                
+                match s.cur_dir {
+                    DOWN => s.anim(Action::WalkD),
+                    UP => s.anim(Action::WalkU),
+                    LEFT => s.anim(Action::WalkL),
+                    RIGHT => s.anim(Action::WalkR),
+                    _ => ()
+                }
+            }
 
-        // GESTURE: START
-        if now_keys[DOWN] && !prev_keys[DOWN] {
-            s.dir = DOWN;
-            s.tapc[DOWN] = 8;
-        }
-        if now_keys[UP] && !prev_keys[UP] {
-            s.dir = UP;
-            s.tapc[UP] = 8;
-        }
-        if now_keys[LEFT] && !prev_keys[LEFT] {
-            s.dir = LEFT;
-            s.tapc[LEFT] = 8;
-        }
-        if now_keys[RIGHT] && !prev_keys[RIGHT] {
-            s.dir = RIGHT;
-            s.tapc[RIGHT] = 8;
-        }
-
-        // GESTURE: NEW HOLD
-        if !s.move_lock {
-            if now_keys[DOWN] && s.tapc[DOWN] == 0 {
-                s.anim(Action::WalkD);
-                if s.movec == 0 { s.movec = 32; }
-            }
-            if now_keys[UP] && s.tapc[UP] == 0 {
-                s.anim(Action::WalkU);
-                if s.movec == 0 { s.movec = 32; }
-            }
-            if now_keys[LEFT] && s.tapc[LEFT] == 0 {
-                s.anim(Action::WalkL);
-                if s.movec == 0 { s.movec = 32; }
-            }
-            if now_keys[RIGHT] && s.tapc[RIGHT] == 0 {
-                s.anim(Action::WalkR);
-                if s.movec == 0 { s.movec = 32; }
-            }
+            s.pos.walk(s.cur_dir);
+            dbg!(s.pos);
         }
     }
-
-    // SPACE START
-
-
-    // HANDLE MOVEMENT
-    if s.movec > 0 { 
-        s.movec -= 1; 
+    
+    if s.movec > 0 {
+        s.movec -= 1;
 
         if s.movec % 2 == 1 {
-            match s.dir {
+            match s.cur_dir {
                 DOWN => s.map.translate_y(-1),
                 UP => s.map.translate_y(1),
                 LEFT => s.map.translate_x(1),
@@ -163,47 +140,7 @@ fn update_state(s: &mut State, now_keys: &[bool], prev_keys: &[bool]) {
                 _ => ()
             }
         }
-
-        if s.movec == 0 {
-            if s.move_lock {
-                s.movec = 32;
-            } else {
-                match s.dir {
-                    DOWN => s.anim(Action::StandD),
-                    UP => s.anim(Action::StandU),
-                    LEFT => s.anim(Action::StandL),
-                    RIGHT => s.anim(Action::StandR),
-                    _ => ()
-                }
-            }
-        }
     }
-
-    // DECREASE TAP COUNTERS
-    for i in 0..4 {
-        if s.tapc[i] > 0 { s.tapc[i] -= 1; }
-    }
-
-    // if now_keys[0] // DOWN
-    // {
-    //     s.map.translate_y(-1);
-    //     s.anim(Action::WalkD);
-    // }
-
-    // if now_keys[1] // UP
-    // {
-    //     s.map.translate_y(1);
-    // }
-
-    // if now_keys[2] // LEFT
-    // {
-    //     s.map.translate_x(1);
-    // }
-
-    // if now_keys[3] // RIGHT
-    // {
-    //     s.map.translate_x(-1);
-    // }
 }
 
 fn render_player(state: &mut State, assets: &mut Assets, fb2d: &mut Image) {
@@ -247,7 +184,7 @@ impl engine::eng::Game for Game {
         ));
 
         let map = Tilemap::new(
-            Vec2i { x: -160, y: -160 }, // TODO: by map/screen width
+            Vec2i { x: PPOS.x - 16 * START.x, y: PPOS.y - 16 * START.y }, // TODO: by map/screen width
             (40, 40),
             tileset,
             (0_usize..1600).map(|x| (x + ((x / 40 + 1) % 2)) % 2).collect::<Vec<usize>>(),
@@ -264,28 +201,6 @@ impl engine::eng::Game for Game {
     }
 
     fn update(state: &mut State, _assets: &mut Assets, now_keys: &[bool], prev_keys: &[bool]) {
-
-        // let now_keys = vec![
-        //     now_keys[VirtualKeyCode::Down as usize],
-        //     now_keys[VirtualKeyCode::Up as usize],
-        //     now_keys[VirtualKeyCode::Left as usize],
-        //     now_keys[VirtualKeyCode::Right as usize],
-        // ];
-
-        // let prev_keys = vec![
-        //     prev_keys[VirtualKeyCode::Down as usize],
-        //     prev_keys[VirtualKeyCode::Up as usize],
-        //     prev_keys[VirtualKeyCode::Left as usize],
-        //     prev_keys[VirtualKeyCode::Right as usize],
-        // ];
-
-        // let prev2_keys = vec![
-        //     prev2_keys[VirtualKeyCode::Down as usize],
-        //     prev2_keys[VirtualKeyCode::Up as usize],
-        //     prev2_keys[VirtualKeyCode::Left as usize],
-        //     prev2_keys[VirtualKeyCode::Right as usize],
-        // ];
-
         update_state(state, now_keys, prev_keys);
     }
 
