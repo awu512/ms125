@@ -37,12 +37,27 @@ use vulkano::sync::{self, FlushError, GpuFuture};
 use vulkano::Version;
 use vulkano_win::VkSurfaceBuild;
 use winit::dpi::{PhysicalSize};
-use winit::event::{Event, WindowEvent};
+use winit::event::{Event, WindowEvent, VirtualKeyCode};
 use winit::event_loop::{ControlFlow, EventLoop};
 use winit::window::{Window, WindowBuilder};
 
 pub const WIDTH: usize = 176;
 pub const HEIGHT: usize = 176;
+const WIN_WIDTH: i32 = 1760;
+const WIN_HEIGHT: i32 = 1760;
+
+pub const KEY_HOLD: usize = 5;
+
+fn index_from_keycode(kc: VirtualKeyCode) -> usize {
+    match kc {
+        VirtualKeyCode::Down => 0,
+        VirtualKeyCode::Up => 1,
+        VirtualKeyCode::Left => 2,
+        VirtualKeyCode::Right => 3,
+        VirtualKeyCode::Space => 4,
+        _ => 5
+    }
+}
 
 pub trait Game {
     type State;
@@ -51,7 +66,7 @@ pub trait Game {
     fn update(
         state: &mut Self::State,
         assets: &mut Self::Assets,
-        keys: &[bool],
+        now_keys: &[bool],
         prev_keys: &[bool],
     );
     fn render(state: &mut Self::State, assets: &mut Self::Assets, fb: &mut Image);
@@ -71,10 +86,8 @@ pub fn go<GameT: Game + 'static>() {
     };
     let mut fb_state = FBState::new(&vk, &vk_state, fb2d);
 
-    let mut now_keys = [false; 255];
+    let mut now_keys = [false; 5];
     let mut prev_keys = now_keys.clone();
-    let mut now_lmouse = false;
-    let mut prev_lmouse = false;
 
     event_loop.run(move |event, _, control_flow| {
         match event {
@@ -91,9 +104,8 @@ pub fn go<GameT: Game + 'static>() {
                 vk_state.recreate_swapchain = true;
             }
             Event::NewEvents(_) => {
-                // Leave now_keys alone, but copy over all changed keys
+                // Copy each frame's keys down one in the matrix, leave 0th row
                 prev_keys.copy_from_slice(&now_keys);
-                prev_lmouse = now_lmouse;
             }
             Event::WindowEvent {
                 // Note this deeply nested pattern match
@@ -111,36 +123,23 @@ pub fn go<GameT: Game + 'static>() {
                 ..
             } => {
                 // It also binds these handy variable names!
-                match state {
-                    winit::event::ElementState::Pressed => {
-                        // VirtualKeycode is an enum with a defined representation
-                        now_keys[keycode as usize] = true;
-                    }
-                    winit::event::ElementState::Released => {
-                        now_keys[keycode as usize] = false;
-                    }
-                }
-            }
-            Event::WindowEvent {
-                event:
-                    WindowEvent::MouseInput {
-                        button: btn, state, ..
-                    },
-                ..
-            } => {
-                match btn {
-                    winit::event::MouseButton::Left => {
+                match keycode {
+                    VirtualKeyCode::Down |
+                    VirtualKeyCode::Up |
+                    VirtualKeyCode::Left |
+                    VirtualKeyCode::Right |
+                    VirtualKeyCode::Space => {
                         match state {
                             winit::event::ElementState::Pressed => {
                                 // VirtualKeycode is an enum with a defined representation
-                                now_lmouse = true;
+                                now_keys[index_from_keycode(keycode)] = true;
                             }
                             winit::event::ElementState::Released => {
-                                now_lmouse = false;
+                                now_keys[index_from_keycode(keycode)] = false;
                             }
                         }
-                    }
-                    _ => {}
+                    },
+                    _ => (),
                 }
             }
             Event::MainEventsCleared => {
@@ -190,7 +189,7 @@ impl Vk {
         let required_extensions = vulkano_win::required_extensions();
         let instance = Instance::new(None, Version::V1_1, &required_extensions, None).unwrap();
         let event_loop = EventLoop::new();
-        let win_size = PhysicalSize { width: 1408_i32, height: 1408_i32 };
+        let win_size = PhysicalSize { width: WIN_WIDTH, height: WIN_HEIGHT };
         let surface = WindowBuilder::new()
             .with_resizable(false)
             .with_inner_size(win_size)
