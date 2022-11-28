@@ -1,14 +1,9 @@
-use crate::sprite::{Action, Character};
+use crate::sprite::{Action};
 use crate::types::{Image, Rect, Vec2i};
 use std::collections::hash_map::HashMap;
 use std::rc::Rc;
 
-const MARIO_RECT_WIDTH: usize = 20;
-const MARIO_RECT_HEIGHT: usize = 32;
-const INVADER_ENEMY_RECT_WIDTH: usize = 16;
-const INVADER_ENEMY_RECT_HEIGHT: usize = 16;
-const INVADER_PLAYER_RECT_WIDTH: usize = 22;
-const INVADER_PLAYER_RECT_HEIGHT: usize = 16;
+pub const PSZ: Vec2i = Vec2i { x: 16, y: 16 };
 
 #[allow(dead_code)]
 #[derive(PartialEq, Clone, Debug)]
@@ -70,7 +65,6 @@ impl AnimationState {
 }
 
 pub struct AnimationSet {
-    pub character: Character, // dont need this
     pub image: Image,
     pub animations: HashMap<Action, Rc<Animation>>,
 }
@@ -85,7 +79,7 @@ impl AnimationSet {
         AnimationState {
             start_time: 0,
             now: 0,
-            action: action,
+            action,
             animation: self.animations.get(&action).unwrap().clone(),
         }
     }
@@ -106,378 +100,94 @@ impl AnimationSet {
         self.image = image;
     }
 
-    pub fn set_character(&mut self, character: Character) {
-        self.character = character;
-    }
-
-    pub fn new(character: Character) -> Self {
-        let image = Image::from_file(std::path::Path::new("../game/content/spritesheet.png"));
+    pub fn new(gen: u8) -> Self { // TODO: do we need different gens, can it be down only swapping path?
+        let path = &format!("game/content/sp0{}ash.png", gen);
+        let image = Image::from_file(std::path::Path::new(path));
         let mut animations: HashMap<Action, Rc<Animation>> = HashMap::new();
-        if character == Character::Mario {
-            animations.insert(
-                Action::Jump,
-                Rc::new(Animation {
-                    frames: vec![
-                        Rect {
-                            pos: Vec2i { x: 0, y: 96 },
-                            sz: Vec2i {
-                                x: MARIO_RECT_WIDTH as i32,
-                                y: MARIO_RECT_HEIGHT as i32,
-                            },
-                        },
-                        Rect {
-                            pos: Vec2i { x: 20, y: 96 },
-                            sz: Vec2i {
-                                x: MARIO_RECT_WIDTH as i32 as i32,
-                                y: MARIO_RECT_HEIGHT as i32,
-                            },
-                        },
-                        Rect {
-                            pos: Vec2i { x: 40, y: 96 },
-                            sz: Vec2i {
-                                x: MARIO_RECT_WIDTH as i32,
-                                y: MARIO_RECT_HEIGHT as i32,
-                            },
-                        },
-                        Rect {
-                            pos: Vec2i { x: 60, y: 96 },
-                            sz: Vec2i {
-                                x: MARIO_RECT_WIDTH as i32,
-                                y: MARIO_RECT_HEIGHT as i32,
-                            },
-                        },
-                        Rect {
-                            pos: Vec2i { x: 80, y: 96 },
-                            sz: Vec2i {
-                                x: MARIO_RECT_WIDTH as i32,
-                                y: MARIO_RECT_HEIGHT as i32,
-                            },
-                        },
-                        Rect {
-                            pos: Vec2i { x: 100, y: 96 },
-                            sz: Vec2i {
-                                x: MARIO_RECT_WIDTH as i32,
-                                y: MARIO_RECT_HEIGHT as i32,
-                            },
-                        },
-                    ],
-                    frame_timings: vec![0, 10, 20, 30, 40, 50],
-                    loops: true,
-                }),
-            );
-            animations.insert(
-                Action::Walk,
-                Rc::new(Animation {
-                    frames: vec![
-                        Rect {
-                            pos: Vec2i { x: 0, y: 64 },
-                            sz: Vec2i {
-                                x: MARIO_RECT_WIDTH as i32,
-                                y: MARIO_RECT_HEIGHT as i32,
-                            },
-                        },
-                        Rect {
-                            pos: Vec2i { x: 20, y: 64 },
-                            sz: Vec2i {
-                                x: MARIO_RECT_WIDTH as i32,
-                                y: MARIO_RECT_HEIGHT as i32,
-                            },
-                        },
-                        Rect {
-                            pos: Vec2i { x: 40, y: 64 },
-                            sz: Vec2i {
-                                x: MARIO_RECT_WIDTH as i32,
-                                y: MARIO_RECT_HEIGHT as i32,
-                            },
-                        },
-                        Rect {
-                            pos: Vec2i { x: 60, y: 64 },
-                            sz: Vec2i {
-                                x: MARIO_RECT_WIDTH as i32,
-                                y: MARIO_RECT_HEIGHT as i32,
-                            },
-                        },
-                        Rect {
-                            pos: Vec2i { x: 80, y: 64 },
-                            sz: Vec2i {
-                                x: MARIO_RECT_WIDTH as i32,
-                                y: MARIO_RECT_HEIGHT as i32,
-                            },
-                        },
-                    ],
-                    frame_timings: vec![0, 10, 20, 30, 40],
-                    loops: true,
-                }),
-            );
-            animations.insert(
-                Action::Die,
-                Rc::new(Animation {
-                    frames: vec![Rect {
-                        pos: Vec2i { x: 40, y: 0 },
-                        sz: Vec2i {
-                            x: MARIO_RECT_WIDTH as i32,
-                            y: MARIO_RECT_HEIGHT as i32,
-                        },
-                    }],
-                    frame_timings: vec![0],
-                    loops: true,
-                }),
-            );
-            animations.insert(
-                Action::Stand,
-                Rc::new(Animation {
-                    frames: vec![Rect {
-                        pos: Vec2i { x: 20, y: 0 },
-                        sz: Vec2i {
-                            x: MARIO_RECT_WIDTH as i32,
-                            y: MARIO_RECT_HEIGHT as i32,
-                        },
-                    }],
-                    frame_timings: vec![0],
-                    loops: true,
-                }),
-            );
-        } else if character == Character::Luigi {
-            animations.insert(
-                Action::Jump,
-                Rc::new(Animation {
-                    frames: vec![
-                        Rect {
-                            pos: Vec2i { x: 120, y: 96 },
-                            sz: Vec2i {
-                                x: MARIO_RECT_WIDTH as i32,
-                                y: MARIO_RECT_HEIGHT as i32,
-                            },
-                        },
-                        Rect {
-                            pos: Vec2i { x: 140, y: 96 },
-                            sz: Vec2i {
-                                x: MARIO_RECT_WIDTH as i32 as i32,
-                                y: MARIO_RECT_HEIGHT as i32,
-                            },
-                        },
-                        Rect {
-                            pos: Vec2i { x: 160, y: 96 },
-                            sz: Vec2i {
-                                x: MARIO_RECT_WIDTH as i32,
-                                y: MARIO_RECT_HEIGHT as i32,
-                            },
-                        },
-                        Rect {
-                            pos: Vec2i { x: 180, y: 96 },
-                            sz: Vec2i {
-                                x: MARIO_RECT_WIDTH as i32,
-                                y: MARIO_RECT_HEIGHT as i32,
-                            },
-                        },
-                        Rect {
-                            pos: Vec2i { x: 200, y: 96 },
-                            sz: Vec2i {
-                                x: MARIO_RECT_WIDTH as i32,
-                                y: MARIO_RECT_HEIGHT as i32,
-                            },
-                        },
-                        Rect {
-                            pos: Vec2i { x: 220, y: 96 },
-                            sz: Vec2i {
-                                x: MARIO_RECT_WIDTH as i32,
-                                y: MARIO_RECT_HEIGHT as i32,
-                            },
-                        },
-                    ],
-                    frame_timings: vec![0, 10, 20, 30, 40, 50],
-                    loops: true,
-                }),
-            );
-            animations.insert(
-                Action::Walk,
-                Rc::new(Animation {
-                    frames: vec![
-                        Rect {
-                            pos: Vec2i { x: 120, y: 64 },
-                            sz: Vec2i {
-                                x: MARIO_RECT_WIDTH as i32,
-                                y: MARIO_RECT_HEIGHT as i32,
-                            },
-                        },
-                        Rect {
-                            pos: Vec2i { x: 140, y: 64 },
-                            sz: Vec2i {
-                                x: MARIO_RECT_WIDTH as i32,
-                                y: MARIO_RECT_HEIGHT as i32,
-                            },
-                        },
-                        Rect {
-                            pos: Vec2i { x: 160, y: 64 },
-                            sz: Vec2i {
-                                x: MARIO_RECT_WIDTH as i32,
-                                y: MARIO_RECT_HEIGHT as i32,
-                            },
-                        },
-                        Rect {
-                            pos: Vec2i { x: 180, y: 64 },
-                            sz: Vec2i {
-                                x: MARIO_RECT_WIDTH as i32,
-                                y: MARIO_RECT_HEIGHT as i32,
-                            },
-                        },
-                        Rect {
-                            pos: Vec2i { x: 200, y: 64 },
-                            sz: Vec2i {
-                                x: MARIO_RECT_WIDTH as i32,
-                                y: MARIO_RECT_HEIGHT as i32,
-                            },
-                        },
-                    ],
-                    frame_timings: vec![0, 10, 20, 30, 40],
-                    loops: true,
-                }),
-            );
-            animations.insert(
-                Action::Die,
-                Rc::new(Animation {
-                    frames: vec![Rect {
-                        pos: Vec2i { x: 160, y: 0 },
-                        sz: Vec2i {
-                            x: MARIO_RECT_WIDTH as i32,
-                            y: MARIO_RECT_HEIGHT as i32,
-                        },
-                    }],
-                    frame_timings: vec![0],
-                    loops: true,
-                }),
-            );
-            animations.insert(
-                Action::Stand,
-                Rc::new(Animation {
-                    frames: vec![Rect {
-                        pos: Vec2i { x: 140, y: 0 },
-                        sz: Vec2i {
-                            x: MARIO_RECT_WIDTH as i32,
-                            y: MARIO_RECT_HEIGHT as i32,
-                        },
-                    }],
-                    frame_timings: vec![0],
-                    loops: true,
-                }),
-            );
-        } else if character == Character::SpaceInvader {
-            animations.insert(
-                Action::Die,
-                Rc::new(Animation {
-                    frames: vec![
-                        Rect {
-                            pos: Vec2i { x: 37, y: 32 },
-                            sz: Vec2i {
-                                x: INVADER_PLAYER_RECT_WIDTH as i32,
-                                y: INVADER_PLAYER_RECT_HEIGHT as i32,
-                            },
-                        },
-                        Rect {
-                            pos: Vec2i { x: 37, y: 50 },
-                            sz: Vec2i {
-                                x: INVADER_PLAYER_RECT_WIDTH as i32,
-                                y: INVADER_PLAYER_RECT_HEIGHT as i32,
-                            },
-                        },
-                    ],
-                    frame_timings: vec![0, 10],
-                    loops: true,
-                }),
-            );
-            animations.insert(
-                Action::Glide,
-                Rc::new(Animation {
-                    frames: vec![Rect {
-                        pos: Vec2i { x: 37, y: 16 },
-                        sz: Vec2i {
-                            x: INVADER_PLAYER_RECT_WIDTH as i32,
-                            y: INVADER_PLAYER_RECT_HEIGHT as i32,
-                        },
-                    }],
-                    frame_timings: vec![0],
-                    loops: true,
-                }),
-            );
-        } else if character == Character::SpaceInvaderEnemy1 {
-            animations.insert(
-                Action::Glide,
-                Rc::new(Animation {
-                    frames: vec![
-                        Rect {
-                            pos: Vec2i { x: 0, y: 0 },
-                            sz: Vec2i {
-                                x: INVADER_ENEMY_RECT_WIDTH as i32,
-                                y: INVADER_ENEMY_RECT_HEIGHT as i32,
-                            },
-                        },
-                        Rect {
-                            pos: Vec2i { x: 16, y: 0 },
-                            sz: Vec2i {
-                                x: INVADER_ENEMY_RECT_WIDTH as i32,
-                                y: INVADER_ENEMY_RECT_HEIGHT as i32,
-                            },
-                        },
-                    ],
-                    frame_timings: vec![0, 10],
-                    loops: true,
-                }),
-            );
-            animations.insert(
-                Action::Die,
-                Rc::new(Animation {
-                    frames: vec![Rect {
-                        pos: Vec2i { x: 32, y: 0 },
-                        sz: Vec2i {
-                            x: INVADER_ENEMY_RECT_WIDTH as i32,
-                            y: INVADER_ENEMY_RECT_HEIGHT as i32,
-                        },
-                    }],
-                    frame_timings: vec![0],
-                    loops: true,
-                }),
-            );
-        } else if character == Character::SpaceInvaderEnemy2 {
-            animations.insert(
-                Action::Glide,
-                Rc::new(Animation {
-                    frames: vec![
-                        Rect {
-                            pos: Vec2i { x: 0, y: 16 },
-                            sz: Vec2i {
-                                x: INVADER_ENEMY_RECT_WIDTH as i32,
-                                y: INVADER_ENEMY_RECT_HEIGHT as i32,
-                            },
-                        },
-                        Rect {
-                            pos: Vec2i { x: 16, y: 16 },
-                            sz: Vec2i {
-                                x: INVADER_ENEMY_RECT_WIDTH as i32,
-                                y: INVADER_ENEMY_RECT_HEIGHT as i32,
-                            },
-                        },
-                    ],
-                    frame_timings: vec![0, 10],
-                    loops: true,
-                }),
-            );
-            animations.insert(
-                Action::Die,
-                Rc::new(Animation {
-                    frames: vec![Rect {
-                        pos: Vec2i { x: 32, y: 0 },
-                        sz: Vec2i {
-                            x: INVADER_ENEMY_RECT_WIDTH as i32,
-                            y: INVADER_ENEMY_RECT_HEIGHT as i32,
-                        },
-                    }],
-                    frame_timings: vec![0],
-                    loops: true,
-                }),
-            );
-        }
+
+        animations.insert(
+            Action::StandD,
+            Rc::new(Animation {
+                frames: vec![Rect { pos: Vec2i { x: 0, y: 0 }, sz: PSZ }],
+                frame_timings: vec![0],
+                loops: true,
+            }),
+        );
+        animations.insert(
+            Action::StandU,
+            Rc::new(Animation {
+                frames: vec![Rect { pos: Vec2i { x: 0, y: 16 }, sz: PSZ }],
+                frame_timings: vec![0],
+                loops: true,
+            }),
+        );
+        animations.insert(
+            Action::StandL,
+            Rc::new(Animation {
+                frames: vec![Rect { pos: Vec2i { x: 0, y: 32 }, sz: PSZ }],
+                frame_timings: vec![0],
+                loops: true,
+            }),
+        );
+        animations.insert(
+            Action::StandR,
+            Rc::new(Animation {
+                frames: vec![Rect { pos: Vec2i { x: 0, y: 48 }, sz: PSZ }],
+                frame_timings: vec![0],
+                loops: true,
+            }),
+        );
+
+        animations.insert(
+            Action::WalkD,
+            Rc::new(Animation {
+                frames: vec![
+                    Rect { pos: Vec2i { x: 0, y: 0 }, sz: PSZ },
+                    Rect { pos: Vec2i { x: 16, y: 0 }, sz: PSZ },
+                    Rect { pos: Vec2i { x: 0, y: 0 }, sz: PSZ },
+                    Rect { pos: Vec2i { x: 32, y: 0 }, sz: PSZ },
+                ],
+                frame_timings: vec![0, 15, 30, 45],
+                loops: true,
+            }),
+        );
+        animations.insert(
+            Action::WalkU,
+            Rc::new(Animation {
+                frames: vec![
+                    Rect { pos: Vec2i { x: 0, y: 16 }, sz: PSZ },
+                    Rect { pos: Vec2i { x: 16, y: 16 }, sz: PSZ },
+                    Rect { pos: Vec2i { x: 0, y: 16 }, sz: PSZ },
+                    Rect { pos: Vec2i { x: 32, y: 16 }, sz: PSZ },
+                ],
+                frame_timings: vec![0, 15, 30, 45],
+                loops: true,
+            }),
+        );
+        animations.insert(
+            Action::WalkL,
+            Rc::new(Animation {
+                frames: vec![
+                    Rect { pos: Vec2i { x: 0, y: 32 }, sz: PSZ },
+                    Rect { pos: Vec2i { x: 16, y: 32 }, sz: PSZ },
+                ],
+                frame_timings: vec![0, 15],
+                loops: true,
+            }),
+        );
+        animations.insert(
+            Action::WalkR,
+            Rc::new(Animation {
+                frames: vec![
+                    Rect { pos: Vec2i { x: 0, y: 48 }, sz: PSZ },
+                    Rect { pos: Vec2i { x: 16, y: 48 }, sz: PSZ },
+                ],
+                frame_timings: vec![0, 15],
+                loops: true,
+            }),
+        );
+
         AnimationSet {
-            character,
             image,
             animations,
         }
