@@ -13,6 +13,12 @@ pub enum Action {
     WalkR,
 }
 
+impl Action {
+    pub fn is_standing(self) -> bool {
+        matches!(self, Self::StandD | Self::StandU | Self::StandL | Self::StandR)
+    }
+}
+
 #[allow(dead_code)]
 pub struct Sprite {
     pub animation_state: AnimationState,
