@@ -1,9 +1,8 @@
 use crate::sprite::{Action};
+use crate::types::PSZ;
 use crate::types::{Image, Rect, Vec2i};
 use std::collections::hash_map::HashMap;
 use std::rc::Rc;
-
-pub const PSZ: Vec2i = Vec2i { x: 16, y: 16 };
 
 #[allow(dead_code)]
 #[derive(PartialEq, Clone, Debug)]

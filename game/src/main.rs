@@ -1,24 +1,9 @@
-use std::ops::Index;
 use std::rc::Rc;
-use engine::eng::{WIDTH, HEIGHT};
-use winit::event::VirtualKeyCode;
 
-use engine::animations::{AnimationSet, PSZ};
+use engine::animations::AnimationSet;
 use engine::sprite::{Action, Sprite};
 use engine::tiles::*;
 use engine::types::*;
-
-const SSZ: Vec2i = Vec2i { x: WIDTH as i32, y: HEIGHT as i32}; // SCREEN SIZE
-const TSZ: i32 = 16; // TILE SIZE
-
-const START: Pos = Pos { x: 10, y: 10 };
-const PPOS: Vec2i = Vec2i { x: (SSZ.x / 2) - (PSZ.x / 2), y: (SSZ.y / 2) - (PSZ.y / 2) };
-
-const DOWN: usize = 0;
-const UP: usize = 1;
-const LEFT: usize = 2;
-const RIGHT: usize = 3;
-const SPACE: usize = 4;
 
 struct Assets {
     spritesheet: Rc<Image>,
@@ -124,7 +109,6 @@ fn update_state(s: &mut State, now_keys: &[bool], prev_keys: &[bool]) {
             }
 
             s.pos.walk(s.cur_dir);
-            dbg!(s.pos);
         }
     }
     
@@ -184,7 +168,7 @@ impl engine::eng::Game for Game {
         ));
 
         let map = Tilemap::new(
-            Vec2i { x: PPOS.x - 16 * START.x, y: PPOS.y - 16 * START.y }, // TODO: by map/screen width
+            Vec2i { x: PPOS.x - TILE_SZ * START.x, y: PPOS.y - TILE_SZ * START.y }, // TODO: by map/screen width
             (40, 40),
             tileset,
             (0_usize..1600).map(|x| (x + ((x / 40 + 1) % 2)) % 2).collect::<Vec<usize>>(),

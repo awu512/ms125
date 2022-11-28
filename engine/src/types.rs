@@ -1,3 +1,27 @@
+// CONSTANTS
+pub const WIDTH: usize = 176;
+pub const HEIGHT: usize = 176;
+
+pub const WIN_WIDTH: i32 = 1760;
+pub const WIN_HEIGHT: i32 = 1760;
+
+pub const TILE_SZ: i32 = 16;
+
+pub const DOWN: usize = 0;
+pub const UP: usize = 1;
+pub const LEFT: usize = 2;
+pub const RIGHT: usize = 3;
+pub const SPACE: usize = 4;
+
+pub const PSZ: Vec2i = Vec2i { x: 16, y: 16 };
+pub const PPOS: Vec2i = Vec2i { 
+    x: (WIDTH as i32 / 2) - (PSZ.x / 2), 
+    y: (HEIGHT as i32 / 2) - (PSZ.y / 2) 
+};
+
+pub const START: Pos = Pos { x: 10, y: 10 };
+
+// TYPES
 pub type Color = (u8, u8, u8, u8);
 
 #[derive(PartialEq, Eq, Clone, Copy, Hash, Debug)]
@@ -19,21 +43,31 @@ impl std::ops::Add<Vec2i> for Vec2i {
 
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub struct Pos {
-    pub x: f32,
-    pub y: f32,
+    pub x: i32,
+    pub y: i32,
 }
 
 impl Pos {
-    pub fn x(&self) -> i32 {
+    pub fn walk(&mut self, dir: usize) {
+        match dir {
+            0 => self.y += 1,
+            1 => self.y -= 1,
+            2 => self.x -= 1,
+            3 => self.x += 1,
+            _ => panic!("need a Walk Action")
+        }
+    }
+
+    pub fn pixel_x(&self) -> i32 {
         16 * (self.x as i32)
     }
 
-    pub fn y(&self) -> i32 {
+    pub fn pixel_y(&self) -> i32 {
         16 * (self.y as i32)
     }
 
     pub fn get(&self) -> Vec2i {
-        Vec2i { x: self.x(), y: self.y() }
+        Vec2i { x: self.pixel_x(), y: self.pixel_y() }
     }
 }
 

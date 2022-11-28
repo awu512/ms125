@@ -11,7 +11,8 @@
 
 use std::sync::Arc;
 
-use super::types::{Color, Image, Vec2i};
+use crate::types::{WIDTH, HEIGHT, WIN_WIDTH, WIN_HEIGHT};
+use crate::types::{Color, Image, Vec2i};
 use vulkano::buffer::{BufferUsage, CpuAccessibleBuffer, TypedBufferAccess};
 use vulkano::command_buffer::{AutoCommandBufferBuilder, CommandBufferUsage, SubpassContents};
 use vulkano::descriptor_set::PersistentDescriptorSet;
@@ -40,13 +41,6 @@ use winit::dpi::{PhysicalSize};
 use winit::event::{Event, WindowEvent, VirtualKeyCode};
 use winit::event_loop::{ControlFlow, EventLoop};
 use winit::window::{Window, WindowBuilder};
-
-pub const WIDTH: usize = 176;
-pub const HEIGHT: usize = 176;
-const WIN_WIDTH: i32 = 1760;
-const WIN_HEIGHT: i32 = 1760;
-
-pub const KEY_HOLD: usize = 5;
 
 fn index_from_keycode(kc: VirtualKeyCode) -> usize {
     match kc {

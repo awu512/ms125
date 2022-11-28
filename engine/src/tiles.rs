@@ -1,8 +1,7 @@
+use crate::types::TILE_SZ;
 use crate::types::{Image, Rect, Vec2i};
 
 use std::rc::Rc;
-
-pub const TILE_SZ: usize = 16;
 
 /// A graphical tile, we'll implement Copy since it's tiny
 #[derive(Clone, Copy)]
@@ -39,17 +38,17 @@ impl Tileset {
     fn get_rect(&self, id: TileID) -> Rect {
         let idx = id.0;
         let (w, _h) = self.image.size();
-        let tw = w as usize / TILE_SZ;
+        let tw = w as usize / TILE_SZ as usize;
         let row = idx / tw;
         let col = idx - (row * tw);
         Rect {
             pos: Vec2i {
-                x: col as i32 * TILE_SZ as i32,
-                y: row as i32 * TILE_SZ as i32,
+                x: col as i32 * TILE_SZ,
+                y: row as i32 * TILE_SZ,
             },
             sz: Vec2i {
-                x: TILE_SZ as i32,
-                y: TILE_SZ as i32,
+                x: TILE_SZ,
+                y: TILE_SZ,
             },
         }
     }
@@ -85,13 +84,13 @@ impl Tilemap {
 
     pub fn tile_id_at(&self, Vec2i { x, y }: Vec2i) -> (Vec2i, TileID) {
         // Translate into map coordinates
-        let x = (x - self.position.x) / TILE_SZ as i32;
-        let y = (y - self.position.y) / TILE_SZ as i32;
+        let x = (x - self.position.x) / TILE_SZ;
+        let y = (y - self.position.y) / TILE_SZ;
         // return the tile corner and the tile ID
         (
             Vec2i {
-                x: x * TILE_SZ as i32 + self.position.x,
-                y: y * TILE_SZ as i32 + self.position.y,
+                x: x * TILE_SZ + self.position.x,
+                y: y * TILE_SZ + self.position.y,
             },
             self.map[y as usize * self.dims.0 + x as usize],
         )
@@ -121,10 +120,10 @@ impl Tilemap {
     pub fn draw(&self, screen: &mut Image) {
         for (y, row) in self.map.chunks_exact(self.dims.0).enumerate() {
             // We are in tile coordinates at this point so we'll need to translate back to pixel units and world coordinates to draw.
-            let ypx = (y * TILE_SZ) as i32 + self.position.y;
+            let ypx = (y * TILE_SZ as usize) as i32 + self.position.y;
             // Here we can iterate through the column index and tiles in the row in parallel
             for (x, id) in row.iter().enumerate() {
-                let xpx = (x * TILE_SZ) as i32 + self.position.x;
+                let xpx = (x * TILE_SZ as usize) as i32 + self.position.x;
                 let frame = self.tileset.get_rect(*id);
                 screen.bitblt(&self.tileset.image, frame, Vec2i { x: xpx, y: ypx });
             }
