@@ -126,7 +126,7 @@ impl Tilemap {
             for (x, id) in row.iter().enumerate() {
                 let xpx = (x * TILE_SZ) as i32 + self.position.x;
                 let frame = self.tileset.get_rect(*id);
-                screen.bitblt(&self.tileset.image, frame, Vec2i { x: xpx, y: ypx }, false);
+                screen.bitblt(&self.tileset.image, frame, Vec2i { x: xpx, y: ypx });
             }
         }
     }

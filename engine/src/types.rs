@@ -169,7 +169,7 @@ impl Image {
         self.buffer[y * self.sz.x as usize + x0..(y * self.sz.x as usize + x1)].fill(c);
     }
 
-    pub fn bitblt(&mut self, src: &Image, from: Rect, to: Vec2i, flip: bool) {
+    pub fn bitblt(&mut self, src: &Image, from: Rect, to: Vec2i) {
         assert!(Rect {
             pos: Vec2i { x: 0, y: 0 },
             sz: src.sz
@@ -212,12 +212,7 @@ impl Image {
             let from_row_start = (from.pos.x + x_skip) as usize;
             let from_row_stop = (from.pos.x + x_count) as usize;
             let from_cols = row_a[from_row_start..from_row_stop].iter();
-            let from_cols = if flip {
-                Box::new(row_a[from_row_start..from_row_stop].iter().rev())
-                    as Box<dyn Iterator<Item = &Color>>
-            } else {
-                Box::new(from_cols) as Box<dyn Iterator<Item = &Color>>
-            };
+            let from_cols = Box::new(from_cols) as Box<dyn Iterator<Item = &Color>>;
             for (to, from) in to_cols.zip(from_cols) {
                 let ta = to.3 as f32 / 255.0;
                 let fa = from.3 as f32 / 255.0;
