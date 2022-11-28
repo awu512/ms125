@@ -1,5 +1,0 @@
-/Users/awu/Desktop/Pomona/MS125/final/target/debug/deps/encoding_index_tests-5a3a3530b86c10a4.rmeta: /Users/awu/.cargo/registry/src/github.com-1ecc6299db9ec823/encoding_index_tests-0.1.4/index_tests.rs
-
-/Users/awu/Desktop/Pomona/MS125/final/target/debug/deps/encoding_index_tests-5a3a3530b86c10a4.d: /Users/awu/.cargo/registry/src/github.com-1ecc6299db9ec823/encoding_index_tests-0.1.4/index_tests.rs
-
-/Users/awu/.cargo/registry/src/github.com-1ecc6299db9ec823/encoding_index_tests-0.1.4/index_tests.rs:
