@@ -1,3 +1,4 @@
+use std::path::Path;
 use std::rc::Rc;
 
 use engine::animations::AnimationSet;
@@ -93,8 +94,6 @@ fn update_state(s: &mut State, now_keys: &[bool], prev_keys: &[bool]) {
                 _ => ()
             }
         } else {
-            s.movec = 32;
-
             // if same dir, do nothing
             if s.cur_dir != s.next_dir.unwrap() || s.p_sprite.animation_state.action.is_standing() { 
                 s.cur_dir = s.next_dir.unwrap();
@@ -108,7 +107,10 @@ fn update_state(s: &mut State, now_keys: &[bool], prev_keys: &[bool]) {
                 }
             }
 
-            s.pos.walk(s.cur_dir);
+            if s.map.can_move(s.pos, s.cur_dir) {
+                s.pos.walk(s.cur_dir);
+                s.movec = 32;
+            }
         }
     }
     
@@ -140,7 +142,7 @@ impl engine::eng::Game for Game {
     type State = State;
     fn new() -> (State, Assets) {
         let tilesheet = Rc::new(Image::from_file(std::path::Path::new(
-            "game/content/tilesheet.png",
+            "game/content/ts01.png",
         )));
         let spritesheet = Rc::new(Image::from_file(std::path::Path::new(
             "game/content/sp01ash.png",
@@ -151,27 +153,23 @@ impl engine::eng::Game for Game {
         let textsheet = Rc::new(Image::from_file(std::path::Path::new(
             "game/content/textsheet.png",
         ))); 
+
+        let solid01 = (0..96)
+            .map(|x| Tile { solid: !(x == 0 || x == 3 || x == 44 || x == 57) })
+            .collect::<Vec<Tile>>();
+
         let tileset = Rc::new(Tileset::new(
-            vec![
-                Tile { solid: true },
-                Tile { solid: true },
-                Tile { solid: true },
-                Tile { solid: true },
-                Tile { solid: true },
-                Tile { solid: false },
-                Tile { solid: false },
-                Tile { solid: false },
-                Tile { solid: false },
-                Tile { solid: false },
-            ],
+            solid01,
             tilesheet,
         ));
 
-        let map = Tilemap::new(
-            Vec2i { x: PPOS.x - TILE_SZ * START.x, y: PPOS.y - TILE_SZ * START.y }, // TODO: by map/screen width
-            (40, 40),
+        let map = Tilemap::from_csv(
+            Vec2i { x: PPOS.x - MOVE_SZ * START.x, y: PPOS.y - MOVE_SZ * START.y },
+            (56, 54),
             tileset,
-            (0_usize..1600).map(|x| (x + ((x / 40 + 1) % 2)) % 2).collect::<Vec<usize>>(),
+            Path::new("game/content/tm01.csv"),
+            2,
+            vec![0, 3, 44, 57],
         );
 
         let assets = Assets {
