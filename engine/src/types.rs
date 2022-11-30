@@ -5,7 +5,8 @@ pub const HEIGHT: usize = 176;
 pub const WIN_WIDTH: i32 = 1760;
 pub const WIN_HEIGHT: i32 = 1760;
 
-pub const TILE_SZ: i32 = 16;
+pub const MOVE_SZ: i32 = 16;
+pub const TILE_SZ: i32 = 8;
 
 pub const DOWN: usize = 0;
 pub const UP: usize = 1;
@@ -19,7 +20,7 @@ pub const PPOS: Vec2i = Vec2i {
     y: (HEIGHT as i32 / 2) - (PSZ.y / 2) 
 };
 
-pub const START: Pos = Pos { x: 10, y: 10 };
+pub const START: Pos = Pos { x: 9, y: 10 };
 
 // TYPES
 pub type Color = (u8, u8, u8, u8);
