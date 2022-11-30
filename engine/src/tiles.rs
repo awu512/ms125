@@ -1,6 +1,7 @@
-use crate::types::TILE_SZ;
-use crate::types::{Image, Rect, Vec2i};
+use crate::types::{DOWN, UP, LEFT, RIGHT, TILE_SZ};
+use crate::types::{Image, Pos, Rect, Vec2i};
 
+use std::fs;
 use std::rc::Rc;
 
 /// A graphical tile, we'll implement Copy since it's tiny
@@ -16,7 +17,7 @@ pub struct Tileset {
 }
 
 /// Indices into a Tileset
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct TileID(usize);
 
 /// Grab a tile with a given ID
@@ -64,6 +65,10 @@ pub struct Tilemap {
     tileset: Rc<Tileset>,
     /// A row-major grid of tile IDs in tileset
     map: Vec<TileID>,
+    /// Scale factor
+    sf: i32,
+    /// Vector containing which tiles are solid
+    movemap: Vec<bool>
 }
 
 impl Tilemap {
@@ -72,14 +77,97 @@ impl Tilemap {
         dims: (usize, usize),
         tileset: Rc<Tileset>,
         map: Vec<usize>,
+        sf: i32,
+        moveables: Vec<usize>
     ) -> Self {
+        assert_eq!(dims.0 * dims.1, map.len(), "Tilemap is the wrong size!");
+
+        let movemap = Self::move_map(dims, &map, moveables, sf);
+
+        Self {
+            position,
+            dims,
+            tileset,
+            map: map.into_iter().map(TileID).collect(),
+            sf,
+            movemap
+        }
+    }
+
+    pub fn from_csv(
+        position: Vec2i,
+        dims: (usize, usize),
+        tileset: Rc<Tileset>,
+        path: &std::path::Path,
+        sf: i32,
+        moveables: Vec<usize>
+    ) -> Self {
+        let content = match fs::read_to_string(path) {
+            Ok(s) => s,
+            Err(error) => panic!("Problem reading file: {:?}", error),
+        };
+
+        let map: Vec<usize> = content
+            .split([',', '\n'])
+            .collect::<Vec<&str>>()
+            .into_iter()
+            .filter(|x| !x.is_empty())
+            .map(|x| x.parse::<usize>().unwrap())
+            .collect();
+
+        let movemap = Self::move_map(dims, &map, moveables, sf);
+
         assert_eq!(dims.0 * dims.1, map.len(), "Tilemap is the wrong size!");
         Self {
             position,
             dims,
             tileset,
             map: map.into_iter().map(TileID).collect(),
+            sf,
+            movemap
         }
+    }
+
+    pub fn contains_solid((w, _h): (usize, usize), map: &[usize], Rect { pos, sz }: Rect, moveables: Vec<usize>) -> bool {
+        for row in pos.y..pos.y+sz.y {
+            for col in pos.x..pos.x+sz.x {
+                if !moveables.contains(&map[row as usize * w + col as usize]) {
+                    return true;
+                }
+            }
+        }
+        false
+    }
+
+    pub fn move_map((w, h): (usize, usize), map: &[usize], moveables: Vec<usize>, sf: i32) -> Vec<bool> {
+        let mut smap: Vec<bool> = Vec::with_capacity((w * h) / (sf*sf) as usize);
+
+        for y in 0..h/sf as usize {
+            for x in 0..w/sf as usize {
+                let r = Rect {
+                    pos: Vec2i { x: sf * x as i32, y: sf * y as i32},
+                    sz: Vec2i { x: sf, y: sf }
+                };
+                smap.push(!Self::contains_solid((w,h), map, r, moveables.clone()));
+            }
+        }
+
+        assert_eq!((w * h) / (sf*sf) as usize, smap.len(), "SolidMap is the wrong size!");
+        smap
+    }
+
+    pub fn can_move(&self, pos: Pos, dir: usize) -> bool {
+        let x = pos.x as usize;
+        let y = pos.y as usize;
+        let next: usize = match dir {
+            DOWN => x + (self.dims.0 / self.sf as usize) * (y + 1),
+            UP => x + (self.dims.0 / self.sf as usize) * (y - 1),
+            LEFT => (x - 1) + (self.dims.0 / self.sf as usize) * y,
+            RIGHT => (x + 1) + (self.dims.0 / self.sf as usize) * y,
+            _ => panic!("Invalid direction")
+        };
+
+        self.movemap[next]
     }
 
     pub fn tile_id_at(&self, Vec2i { x, y }: Vec2i) -> (Vec2i, TileID) {
