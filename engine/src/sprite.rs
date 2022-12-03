@@ -1,5 +1,5 @@
 use crate::animations::AnimationState;
-use crate::types::Rect;
+use crate::types::{Rect, Image, Vec2i};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub enum Action {
@@ -22,7 +22,7 @@ impl Action {
 #[allow(dead_code)]
 pub struct Sprite {
     pub animation_state: AnimationState,
-    pub shape: Rect,
+    pub pos: Vec2i
 }
 
 impl Sprite {
