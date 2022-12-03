@@ -20,7 +20,7 @@ pub const PPOS: Vec2i = Vec2i {
     y: (HEIGHT as i32 / 2) - (PSZ.y / 2) 
 };
 
-pub const START: Pos = Pos { x: 9, y: 10 };
+pub const START: Vec2i = Vec2i { x: 9, y: 10 };
 
 // TYPES
 pub type Color = (u8, u8, u8, u8);
@@ -31,24 +31,7 @@ pub struct Vec2i {
     pub y: i32,
 }
 
-impl std::ops::Add<Vec2i> for Vec2i {
-    type Output = Self;
-
-    fn add(self, other: Vec2i) -> <Self as std::ops::Add<Vec2i>>::Output {
-        Vec2i {
-            x: self.x + other.x,
-            y: self.y + other.y,
-        }
-    }
-}
-
-#[derive(PartialEq, Clone, Copy, Debug)]
-pub struct Pos {
-    pub x: i32,
-    pub y: i32,
-}
-
-impl Pos {
+impl Vec2i {
     pub fn walk(&mut self, dir: usize) {
         match dir {
             0 => self.y += 1,
@@ -72,13 +55,24 @@ impl Pos {
     }
 }
 
-impl std::ops::Add<Pos> for Pos {
+impl std::ops::Add<Vec2i> for Vec2i {
     type Output = Self;
 
-    fn add(self, other: Pos) -> <Self as std::ops::Add<Pos>>::Output {
-        Pos {
+    fn add(self, other: Vec2i) -> <Self as std::ops::Add<Vec2i>>::Output {
+        Vec2i {
             x: self.x + other.x,
             y: self.y + other.y,
+        }
+    }
+}
+
+impl std::ops::Sub<Vec2i> for Vec2i {
+    type Output = Self;
+
+    fn sub(self, other: Vec2i) -> <Self as std::ops::Sub<Vec2i>>::Output {
+        Vec2i {
+            x: self.x - other.x,
+            y: self.y - other.y,
         }
     }
 }
