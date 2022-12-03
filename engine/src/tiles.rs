@@ -1,5 +1,5 @@
 use crate::types::{DOWN, UP, LEFT, RIGHT, TILE_SZ};
-use crate::types::{Image, Pos, Rect, Vec2i};
+use crate::types::{Image, Rect, Vec2i};
 
 use std::fs;
 use std::rc::Rc;
@@ -156,18 +156,8 @@ impl Tilemap {
         smap
     }
 
-    pub fn can_move(&self, pos: Pos, dir: usize) -> bool {
-        let x = pos.x as usize;
-        let y = pos.y as usize;
-        let next: usize = match dir {
-            DOWN => x + (self.dims.0 / self.sf as usize) * (y + 1),
-            UP => x + (self.dims.0 / self.sf as usize) * (y - 1),
-            LEFT => (x - 1) + (self.dims.0 / self.sf as usize) * y,
-            RIGHT => (x + 1) + (self.dims.0 / self.sf as usize) * y,
-            _ => panic!("Invalid direction")
-        };
-
-        self.movemap[next]
+    pub fn can_move_to(&self, pos: Vec2i) -> bool {
+        self.movemap[pos.x as usize + (self.dims.0 / self.sf as usize) * pos.y as usize]
     }
 
     pub fn tile_id_at(&self, Vec2i { x, y }: Vec2i) -> (Vec2i, TileID) {
