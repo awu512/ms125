@@ -1,7 +1,10 @@
+mod world;
+
 use std::path::Path;
 use std::rc::Rc;
 
 use engine::animations::AnimationSet;
+use engine::npc::NPCSet;
 use engine::sprite::{Action, Sprite};
 use engine::tiles::*;
 use engine::types::*;
@@ -15,40 +18,51 @@ struct Assets {
 struct State {
     map: Tilemap,
 
-    p_anims: AnimationSet,
-    p_sprite: Sprite,
+    anims: AnimationSet,
+    sprite: Sprite,
+
+    npcs: NPCSet,
 
     movec: u8,
     cur_dir: usize,
     next_dir: Option<usize>,
-
-    pos: Pos,
 }
 
 impl State {
     pub fn new(map: Tilemap) -> Self {
-        let p_anims = AnimationSet::new(1);
-        let p_sprite = Sprite {
-            animation_state: p_anims.play_animation(Action::StandD),
-            shape: Rect {
-                pos: Vec2i { x: 20, y: 20 },
-                sz: PSZ,
-            },
+        let anims = AnimationSet::new(
+            "game/content/sp01ash.png", 
+            world::anims01()
+        );
+        let sprite = Sprite {
+            animation_state: anims.play_animation(Action::StandD),
+            pos: START,
         };
+        let npcs = world::npcs01();
 
         Self {
             map,
-            p_anims,
-            p_sprite,
+            anims,
+            sprite,
+            npcs,
             movec: 0,
             cur_dir: DOWN,
             next_dir: None,
-            pos: START,
         }
     }
 
     fn anim(&mut self, act: Action) {
-        self.p_sprite.animation_state = self.p_anims.play_animation(act);
+        self.sprite.animation_state = self.anims.play_animation(act);
+    }
+
+    fn translate(&mut self) {
+        match self.cur_dir {
+            DOWN => self.map.translate_y(-1),
+            UP => self.map.translate_y(1),
+            LEFT => self.map.translate_x(1),
+            RIGHT => self.map.translate_x(-1),
+            _ => ()
+        }
     }
 }
 
@@ -82,6 +96,21 @@ fn update_state(s: &mut State, now_keys: &[bool], prev_keys: &[bool]) {
         if now_keys[RIGHT] { s.next_dir = Some(RIGHT) }
     }
 
+    let next_pos = match s.next_dir {
+        Some(DOWN) => Vec2i { x: s.sprite.pos.x, y: s.sprite.pos.y + 1 },
+        Some(UP) => Vec2i { x: s.sprite.pos.x, y: s.sprite.pos.y - 1 },
+        Some(LEFT) => Vec2i { x: s.sprite.pos.x - 1, y: s.sprite.pos.y },
+        Some(RIGHT) => Vec2i { x: s.sprite.pos.x + 1, y: s.sprite.pos.y },
+        None => match s.cur_dir {
+            DOWN => Vec2i { x: s.sprite.pos.x, y: s.sprite.pos.y + 1 },
+            UP => Vec2i { x: s.sprite.pos.x, y: s.sprite.pos.y - 1 },
+            LEFT => Vec2i { x: s.sprite.pos.x - 1, y: s.sprite.pos.y },
+            RIGHT => Vec2i { x: s.sprite.pos.x + 1, y: s.sprite.pos.y },
+            _ => panic!("Invalid direction")
+        }
+        _ => panic!("Invalid direction")
+    };
+
     // MOVEMENT DONE
     if s.movec == 0 {
         if s.next_dir == None { // NO HELD KEY
@@ -95,7 +124,7 @@ fn update_state(s: &mut State, now_keys: &[bool], prev_keys: &[bool]) {
             }
         } else {
             // if same dir, do nothing
-            if s.cur_dir != s.next_dir.unwrap() || s.p_sprite.animation_state.action.is_standing() { 
+            if s.cur_dir != s.next_dir.unwrap() || s.sprite.animation_state.action.is_standing() { 
                 s.cur_dir = s.next_dir.unwrap();
                 
                 match s.cur_dir {
@@ -105,11 +134,19 @@ fn update_state(s: &mut State, now_keys: &[bool], prev_keys: &[bool]) {
                     RIGHT => s.anim(Action::WalkR),
                     _ => ()
                 }
+            };
+    
+            if s.map.can_move_to(next_pos) && matches!(s.npcs.at(next_pos), None) {
+                s.sprite.pos.walk(s.cur_dir);
+                s.movec = 32;
             }
 
-            if s.map.can_move(s.pos, s.cur_dir) {
-                s.pos.walk(s.cur_dir);
-                s.movec = 32;
+        }
+
+        // NPCS
+        if now_keys[SPACE] && !prev_keys[SPACE] {
+            if let Some(npc) = s.npcs.at(next_pos) {
+                npc.turn_to_face(s.cur_dir);
             }
         }
     }
@@ -118,13 +155,7 @@ fn update_state(s: &mut State, now_keys: &[bool], prev_keys: &[bool]) {
         s.movec -= 1;
 
         if s.movec % 2 == 1 {
-            match s.cur_dir {
-                DOWN => s.map.translate_y(-1),
-                UP => s.map.translate_y(1),
-                LEFT => s.map.translate_x(1),
-                RIGHT => s.map.translate_x(-1),
-                _ => ()
-            }
+            s.translate();
         }
     }
 }
@@ -132,7 +163,7 @@ fn update_state(s: &mut State, now_keys: &[bool], prev_keys: &[bool]) {
 fn render_player(state: &mut State, assets: &mut Assets, fb2d: &mut Image) {
     fb2d.bitblt(
         &assets.spritesheet,
-        state.p_sprite.play_animation(&20), // TODO: investigate speedup
+        state.sprite.play_animation(&20), // TODO: investigate speedup
         PPOS,
     );
 }
@@ -182,12 +213,13 @@ impl engine::eng::Game for Game {
         (state, assets)
     }
 
-    fn update(state: &mut State, _assets: &mut Assets, now_keys: &[bool], prev_keys: &[bool]) {
-        update_state(state, now_keys, prev_keys);
+    fn update(s: &mut State, _assets: &mut Assets, now_keys: &[bool], prev_keys: &[bool]) {
+        update_state(s, now_keys, prev_keys);
     }
 
-    fn render(state: &mut State, assets: &mut Assets, fb2d: &mut Image) {
-        state.map.draw(fb2d);
-        render_player(state, assets, fb2d);
+    fn render(s: &mut State, assets: &mut Assets, fb2d: &mut Image) {
+        s.map.draw(fb2d);
+        s.npcs.draw(fb2d, s.sprite.pos, s.movec, s.cur_dir);
+        render_player(s, assets, fb2d);
     }
 }
