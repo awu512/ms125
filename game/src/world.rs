@@ -96,7 +96,14 @@ pub fn anims01() -> HashMap<Action, Rc<Animation>> {
 
 pub fn npcs01() -> NPCSet {
     let npcs = vec![
-        NPC::new(0, 0, Vec2i { x: 15, y: 18 }) // BOY
+        NPC::new(0, 0, Vec2i { x: 15, y: 18 }), // BOY
+        NPC::new(1, 2, Vec2i { x: 7, y: 13 }), // WOMAN
+        NPC::new(2, 3, Vec2i { x: 20, y: 15 }), // OAK
+        NPC::new(3, 0, Vec2i { x: 10, y: 10 }), // MOM
+        NPC::new(4, 0, Vec2i { x: 7, y: 9 }), // HOUSE SIGN
+        NPC::new(4, 0, Vec2i { x: 15, y: 9 }), // GARY SIGN
+        NPC::new(4, 0, Vec2i { x: 11, y: 13 }), // GARDEN 1 SIGN
+        NPC::new(4, 0, Vec2i { x: 17, y: 17 }), // GARDEN 2 SIGN
     ];
 
     NPCSet::new(
