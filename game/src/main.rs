@@ -6,13 +6,12 @@ use std::rc::Rc;
 use engine::animations::AnimationSet;
 use engine::npc::NPCSet;
 use engine::sprite::{Action, Sprite};
+use engine::text::{Textbox, Textset};
 use engine::tiles::*;
 use engine::types::*;
 
 struct Assets {
     spritesheet: Rc<Image>,
-    numsheet: Rc<Image>,
-    textsheet: Rc<Image>,
 }
 
 struct State {
@@ -26,6 +25,9 @@ struct State {
     movec: u8,
     cur_dir: usize,
     next_dir: Option<usize>,
+
+    is_text: bool,
+    textbox: Textbox
 }
 
 impl State {
@@ -40,6 +42,9 @@ impl State {
         };
         let npcs = world::npcs01();
 
+        let textset = Textset::new("game/content/text01.png", world::coords01);
+        let textbox = Textbox::new(Rc::new(textset), "Hello world! This is a test. Plz work");
+
         Self {
             map,
             anims,
@@ -48,6 +53,8 @@ impl State {
             movec: 0,
             cur_dir: DOWN,
             next_dir: None,
+            is_text: false,
+            textbox
         }
     }
 
@@ -147,6 +154,9 @@ fn update_state(s: &mut State, now_keys: &[bool], prev_keys: &[bool]) {
         if now_keys[SPACE] && !prev_keys[SPACE] {
             if let Some(npc) = s.npcs.at(next_pos) {
                 npc.turn_to_face(s.cur_dir);
+                // s.textbox.update();
+                s.is_text = !s.is_text;
+
             }
         }
     }
@@ -178,12 +188,6 @@ impl engine::eng::Game for Game {
         let spritesheet = Rc::new(Image::from_file(std::path::Path::new(
             "game/content/sp01ash.png",
         )));
-        let numsheet = Rc::new(Image::from_file(std::path::Path::new(
-            "game/content/numsheet.png",
-        )));
-        let textsheet = Rc::new(Image::from_file(std::path::Path::new(
-            "game/content/textsheet.png",
-        ))); 
 
         let solid01 = (0..96)
             .map(|x| Tile { solid: !(x == 0 || x == 3 || x == 44 || x == 57) })
@@ -205,8 +209,6 @@ impl engine::eng::Game for Game {
 
         let assets = Assets {
             spritesheet,
-            numsheet,
-            textsheet,
         };
 
         let state = State::new(map);
@@ -221,5 +223,9 @@ impl engine::eng::Game for Game {
         s.map.draw(fb2d);
         s.npcs.draw(fb2d, s.sprite.pos, s.movec, s.cur_dir);
         render_player(s, assets, fb2d);
+
+        if s.is_text {
+            s.textbox.draw(fb2d);
+        }
     }
 }
