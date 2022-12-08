@@ -96,7 +96,7 @@ fn update_state(s: &mut State, now_keys: &[bool], prev_keys: &[bool]) {
     }
 
     // PRESSED -> set next_dir
-    if s.next_dir == None {
+    if s.next_dir == None && !s.is_text {
         if now_keys[DOWN] { s.next_dir = Some(DOWN) }
         if now_keys[UP] { s.next_dir = Some(UP) }
         if now_keys[LEFT] { s.next_dir = Some(LEFT) }
@@ -143,7 +143,10 @@ fn update_state(s: &mut State, now_keys: &[bool], prev_keys: &[bool]) {
                 }
             };
     
-            if s.map.can_move_to(next_pos) && matches!(s.npcs.at(next_pos), None) {
+            if s.map.can_move_to(next_pos) && 
+               matches!(s.npcs.at(next_pos), None) && 
+               !s.is_text 
+            {
                 s.sprite.pos.walk(s.cur_dir);
                 s.movec = 32;
             }
