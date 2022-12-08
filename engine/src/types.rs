@@ -19,8 +19,9 @@ pub const PPOS: Vec2i = Vec2i {
     x: (WIDTH as i32 / 2) - (PSZ.x / 2), 
     y: (HEIGHT as i32 / 2) - (PSZ.y / 2) 
 };
-
 pub const START: Vec2i = Vec2i { x: 9, y: 10 };
+
+pub const TSPEED: usize = 4;
 
 // TYPES
 pub type Color = (u8, u8, u8, u8);
