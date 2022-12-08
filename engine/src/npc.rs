@@ -7,16 +7,18 @@ pub struct NPC {
     row: i32,
     cur_dir: i32,
     def_dir: i32,
-    pos: Vec2i
+    pos: Vec2i,
+    pub text: String
 }
 
 impl NPC {
-    pub fn new(row: i32, dir: i32, pos: Vec2i) -> Self {
+    pub fn new(row: i32, dir: i32, pos: Vec2i, text: String) -> Self {
         Self { 
             row,
             cur_dir: dir,
             def_dir: dir,
-            pos 
+            pos,
+            text
         }
     }
 
