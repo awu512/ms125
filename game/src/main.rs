@@ -150,17 +150,26 @@ fn update_state(s: &mut State, now_keys: &[bool], prev_keys: &[bool]) {
 
         }
 
-        // NPCS
+        // INTERACT KEY (SPACE)
         if now_keys[SPACE] && !prev_keys[SPACE] {
             if let Some(npc) = s.npcs.at(next_pos) {
-                npc.turn_to_face(s.cur_dir);
-                // s.textbox.update();
-                s.is_text = !s.is_text;
-
+                if s.is_text {
+                    s.is_text = s.textbox.scroll();
+                } else {
+                    npc.turn_to_face(s.cur_dir);
+                    s.textbox.set_text(&npc.text);
+                    s.is_text = !s.is_text;
+                }
             }
         }
     }
-    
+
+    // TEXT REVEAL
+    if s.textbox.cptr < 40 * TSPEED {
+        s.textbox.cptr += 1;
+    }
+
+    // HANDLE MOVEMENT
     if s.movec > 0 {
         s.movec -= 1;
 
