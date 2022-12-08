@@ -4,7 +4,9 @@ use engine::sprite::Action;
 use engine::types::{PSZ, TILE_SZ};
 use engine::types::{Rect, Vec2i};
 
+use std::fs::read_to_string;
 use std::collections::HashMap;
+use std::path::Path;
 use std::rc::Rc;
 
 pub fn anims01() -> HashMap<Action, Rc<Animation>> {
@@ -96,15 +98,18 @@ pub fn anims01() -> HashMap<Action, Rc<Animation>> {
 }
 
 pub fn npcs01() -> NPCSet {
+    let raw = read_to_string(Path::new("game/content/dlg01.json")).unwrap();
+    let dlg: HashMap<String, String> = serde_json::from_str::<HashMap<String, String>>(&raw).unwrap();
+
     let npcs = vec![
-        NPC::new(0, 0, Vec2i { x: 15, y: 18 }), // BOY
-        NPC::new(1, 2, Vec2i { x: 7, y: 13 }), // WOMAN
-        NPC::new(2, 3, Vec2i { x: 20, y: 15 }), // OAK
-        NPC::new(3, 0, Vec2i { x: 10, y: 10 }), // MOM
-        NPC::new(4, 0, Vec2i { x: 7, y: 9 }), // HOUSE SIGN
-        NPC::new(4, 0, Vec2i { x: 15, y: 9 }), // GARY SIGN
-        NPC::new(4, 0, Vec2i { x: 11, y: 13 }), // GARDEN 1 SIGN
-        NPC::new(4, 0, Vec2i { x: 17, y: 17 }), // GARDEN 2 SIGN
+        NPC::new(0, 0, Vec2i { x: 15, y: 18 }, dlg["BOY"].to_string()),
+        NPC::new(1, 2, Vec2i { x: 7,  y: 13 }, dlg["WOMAN"].to_string()),
+        NPC::new(2, 3, Vec2i { x: 20, y: 15 }, dlg["OAK"].to_string()),
+        NPC::new(3, 0, Vec2i { x: 10, y: 10 }, dlg["MOM"].to_string()),
+        NPC::new(4, 0, Vec2i { x: 7,  y: 9  }, dlg["HSIGN"].to_string()),
+        NPC::new(4, 0, Vec2i { x: 15, y: 9  }, dlg["RSIGN"].to_string()),
+        NPC::new(4, 0, Vec2i { x: 11, y: 13 }, dlg["TSIGN"].to_string()),
+        NPC::new(4, 0, Vec2i { x: 17, y: 17 }, dlg["BSIGN"].to_string()),
     ];
 
     NPCSet::new(
