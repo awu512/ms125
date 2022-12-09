@@ -133,20 +133,26 @@ impl Textbox {
             }
         }
         words.push(word.clone());
-
+        let mut nl = false;
         let mut li = 0;
         let mut line = [0; 20];
         let mut r = Vec::new();
         for w in words {
-            if li + w.len() + 1 >= 20 {
+            if nl {
+                r.push(line);
+                if r.len()%2 == 1 { r.push([0;20]) }
+                li = 0;
+                line = [0; 20];
+            } else if li + w.len() + 1 >= 20 {
                 r.push(line);
                 li = 0;
                 line = [0; 20];
-            }
-            for (wi, c) in w.iter().enumerate() {
+            } 
+            for (wi,c) in w.iter().enumerate() {
                 line[li + wi] = *c;
             }
             li += w.len() + 1;
+            nl = matches!(w[w.len()-1], 33 | 63 | 46 | 42);
         }
         r.push(line);
         if r.len() % 2 > 0 {
