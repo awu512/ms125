@@ -156,6 +156,7 @@ pub fn coords01(c: usize) -> Vec2i {
             46 => Vec2i { x: 15, y: 3 }, // .
             47 => Vec2i { x: 16, y: 3 }, // /
             44 => Vec2i { x: 17, y: 3 }, // ,
+            42 => Vec2i { x: 20, y: 3 }, // * -> ...
             _ => Vec2i { x: 22, y: 3 } // space (default)
         }
     };
