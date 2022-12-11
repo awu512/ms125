@@ -16,8 +16,9 @@ struct Assets {
 struct State {
     maps: [Tilemap; 2],
     level: usize,
+
+    talkc: u8,
     swapping: bool,
-    swaplock: usize,
 
     anims: AnimationSet,
     sprite: Sprite,
@@ -51,8 +52,8 @@ impl State {
         Self {
             maps,
             level: 0,
-            swapping: true,
-            swaplock: 64,
+            talkc: 0,
+            swapping: false,
             anims,
             sprite,
             npcs,
@@ -62,6 +63,12 @@ impl State {
             is_text: false,
             textbox
         }
+    }
+
+    fn next_level(&mut self) {
+        self.level += 1;
+        self.swapping = false;
+        self.talkc = 0;
     }
 
     fn anim(&mut self, act: Action) {
@@ -167,8 +174,10 @@ fn update_state(s: &mut State, now_keys: &[bool], prev_keys: &[bool]) {
             };
     
             if !s.is_text && (
-               (s.maps[s.level].can_move_to(next_pos) && matches!(s.npcs.at(next_pos), None)) ||
-               (s.swapping && Tilemap::swap_can_move_to(next_pos)))
+               (s.maps[s.level].can_move_to(next_pos) && 
+               matches!(s.npcs.at(next_pos), None)) ||
+               ((Tilemap::swap_can_move_to(next_pos)) && 
+               s.swapping || !s.maps[s.level].can_move_to(s.sprite.pos)))
             {
                 s.sprite.pos.walk(s.cur_dir);
                 s.movec = 32;
@@ -180,11 +189,25 @@ fn update_state(s: &mut State, now_keys: &[bool], prev_keys: &[bool]) {
         if now_keys[SPACE] && !prev_keys[SPACE] {
             if let Some(npc) = s.npcs.at(next_pos) {
                 if s.is_text {
-                    s.is_text = s.textbox.scroll();
+                    let more = s.textbox.scroll();
+                    if !more {
+                        if s.npcs.fin {
+                            s.swapping = true;
+                            s.is_text = false;
+                        } else if s.talkc >= 4 {
+                            s.textbox.set_text(&s.npcs.fin_text);
+                            s.npcs.fin = true;
+                        } else {
+                            s.is_text = false;
+                        }
+                    }
                 } else {
                     npc.turn_to_face(s.cur_dir);
                     s.textbox.set_text(&npc.text);
                     s.is_text = !s.is_text;
+                    if npc.id < 4 && !npc.talked {
+                        s.talkc += 1;
+                    }
                 }
             }
         }
@@ -208,17 +231,8 @@ fn update_state(s: &mut State, now_keys: &[bool], prev_keys: &[bool]) {
     }
 
     // COMPLETE SWAP
-    if s.swapping && s.maps[s.level].swapc >= SWAPNUM && s.swaplock == 64 {
-        s.swaplock = 63;
-        s.maps[s.level].mask.unmask_rest();
-    }
-
-    if s.swaplock == 0 {
-        s.swaplock = 64;
-        s.level += 1;
-        s.swapping = false;
-    } else if s.swaplock < 64 {
-        s.swaplock -= 1;
+    if s.swapping && s.maps[s.level].mask.swapc >= SWAPNUM {
+        s.next_level();
     }
 }
 
