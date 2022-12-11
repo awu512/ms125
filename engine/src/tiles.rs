@@ -1,6 +1,7 @@
-use crate::types::{DOWN, UP, LEFT, RIGHT, TILE_SZ};
+use crate::types::{DOWN, UP, LEFT, RIGHT, TILE_SZ, FADETIME};
 use crate::types::{Image, Rect, Vec2i};
 
+use core::panic;
 use std::fs;
 use std::rc::Rc;
 
@@ -55,12 +56,49 @@ impl Tileset {
     }
 }
 
+#[derive(PartialEq, Eq, Clone, Hash, Debug)]
+pub struct MapMask {
+    pub mask: Box<[u8]>,
+    pub dims: (usize, usize),
+}
+
+impl MapMask {
+    pub fn new(dims: (usize, usize)) -> Self {
+        Self {
+            mask: vec![FADETIME; dims.0 * dims.1].into_boxed_slice(),
+            dims,
+        }
+    }
+
+    pub fn unmask(&mut self, x: usize, y: usize) {
+        if self.mask[y * self.dims.0 + x] >= FADETIME {
+            self.mask[y * self.dims.0 + x] = FADETIME - 1;
+        } 
+    }
+
+    pub fn unmask_rest(&mut self) {
+        for y in 0..self.dims.1 {
+            for x in 0..self.dims.0 {
+                self.unmask(x, y);
+            }
+        }
+    }
+
+    pub fn dec(&mut self, x: usize, y: usize) {
+        self.mask[y * self.dims.0 + x] -= 1;
+    }
+
+    pub fn at(&self, x: usize, y: usize) -> u8 {
+        self.mask[y * self.dims.0 + x]
+    }
+}
+
 /// An actual tilemap
 pub struct Tilemap {
     /// Where the tilemap is in space
     pub position: Vec2i,
     /// How big it is
-    dims: (usize, usize),
+    pub dims: (usize, usize),
     /// Which tileset is used for this tilemap
     tileset: Rc<Tileset>,
     /// A row-major grid of tile IDs in tileset
@@ -68,7 +106,9 @@ pub struct Tilemap {
     /// Scale factor
     sf: i32,
     /// Vector containing which tiles are solid
-    movemap: Vec<bool>
+    movemap: Vec<bool>,
+    pub mask: MapMask,
+    pub swapc: usize
 }
 
 impl Tilemap {
@@ -83,6 +123,7 @@ impl Tilemap {
         assert_eq!(dims.0 * dims.1, map.len(), "Tilemap is the wrong size!");
 
         let movemap = Self::move_map(dims, &map, moveables, sf);
+        let mask = MapMask::new(dims);
 
         Self {
             position,
@@ -90,7 +131,9 @@ impl Tilemap {
             tileset,
             map: map.into_iter().map(TileID).collect(),
             sf,
-            movemap
+            movemap,
+            mask,
+            swapc: 0
         }
     }
 
@@ -116,6 +159,7 @@ impl Tilemap {
             .collect();
 
         let movemap = Self::move_map(dims, &map, moveables, sf);
+        let mask = MapMask::new(dims);
 
         assert_eq!(dims.0 * dims.1, map.len(), "Tilemap is the wrong size!");
         Self {
@@ -124,7 +168,9 @@ impl Tilemap {
             tileset,
             map: map.into_iter().map(TileID).collect(),
             sf,
-            movemap
+            movemap,
+            mask,
+            swapc: 0
         }
     }
 
@@ -160,6 +206,11 @@ impl Tilemap {
         self.movemap[pos.x as usize + (self.dims.0 / self.sf as usize) * pos.y as usize]
     }
 
+    pub fn swap_can_move_to(pos: Vec2i) -> bool {
+        !matches!(pos.x, 0..=4 | 23..=27) &&
+        !matches!(pos.y, 0..=5 | 22..=26)
+    }
+
     pub fn tile_id_at(&self, Vec2i { x, y }: Vec2i) -> (Vec2i, TileID) {
         // Translate into map coordinates
         let x = (x - self.position.x) / TILE_SZ;
@@ -178,21 +229,23 @@ impl Tilemap {
         self.dims
     }
 
+    pub fn size_vec2i(&self) -> Vec2i {
+        Vec2i { x: self.dims.0 as i32, y: self.dims.1 as i32 }
+    }
+
     pub fn tile_at(&self, posn: Vec2i) -> (Vec2i, Tile) {
         let (pos, tile_id) = self.tile_id_at(posn);
         (pos, self.tileset[tile_id])
     }
 
-    pub fn translate(&mut self, delta: Vec2i) {
-        self.position = self.position + delta;
-    }
-
-    pub fn translate_x(&mut self, delta: i32) {
-        self.position.x += delta;
-    }
-
-    pub fn translate_y(&mut self, delta: i32) {
-        self.position.y += delta;
+    pub fn translate(&mut self, dir: usize) {
+        match dir {
+            DOWN => self.position.y -= 1,
+            UP => self.position.y += 1,
+            LEFT => self.position.x += 1,
+            RIGHT => self.position.x -= 1,
+            _ => panic!("Invalid direction")
+        }
     }
 
     pub fn draw(&self, screen: &mut Image) {
@@ -204,6 +257,37 @@ impl Tilemap {
                 let xpx = (x * TILE_SZ as usize) as i32 + self.position.x;
                 let frame = self.tileset.get_rect(*id);
                 screen.bitblt(&self.tileset.image, frame, Vec2i { x: xpx, y: ypx });
+            }
+        }
+    }
+
+    pub fn masked_draw(&mut self, screen: &mut Image) {
+        for (y, row) in self.map.chunks_exact(self.dims.0).enumerate() {
+            // We are in tile coordinates at this point so we'll need to translate back to pixel units and world coordinates to draw.
+            let ypx = (y * TILE_SZ as usize) as i32 + self.position.y;
+            // Here we can iterate through the column index and tiles in the row in parallel
+            for (x, id) in row.iter().enumerate() {
+                let xpx = (x * TILE_SZ as usize) as i32 + self.position.x;
+                let frame = self.tileset.get_rect(*id);
+                let mask_alpha = self.mask.at(x, y);
+                let mut new_tile = false;
+                if mask_alpha >= FADETIME {
+                    screen.bitblt(&self.tileset.image, frame, Vec2i { x: xpx, y: ypx });
+                } else if mask_alpha > 0 {
+                    screen.draw_rect(
+                        &Rect { 
+                            pos: Vec2i { 
+                                x: TILE_SZ * x as i32 + self.position.x, 
+                                y: TILE_SZ * y as i32 + self.position.y 
+                            }, 
+                            sz: Vec2i { x: TILE_SZ, y: TILE_SZ } 
+                        }, 
+                        (128 + (2*mask_alpha), 255, 255, 255)
+                    );
+                    self.mask.dec(x, y);
+                    new_tile = mask_alpha == FADETIME - 1;
+                }
+                self.swapc += new_tile as usize;
             }
         }
     }

@@ -23,6 +23,9 @@ pub const START: Vec2i = Vec2i { x: 9, y: 10 };
 
 pub const TSPEED: usize = 4;
 
+pub const FADETIME: u8 = 64;
+pub const SWAPNUM: usize = 100; // 1428
+
 // TYPES
 pub type Color = (u8, u8, u8, u8);
 
@@ -44,11 +47,11 @@ impl Vec2i {
     }
 
     pub fn pixel_x(&self) -> i32 {
-        16 * (self.x as i32)
+        16 * self.x
     }
 
     pub fn pixel_y(&self) -> i32 {
-        16 * (self.y as i32)
+        16 * self.y
     }
 
     pub fn get(&self) -> Vec2i {
@@ -260,5 +263,3 @@ impl Image {
         }
     }
 }
-
-

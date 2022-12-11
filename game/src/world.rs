@@ -1,13 +1,34 @@
 use engine::animations::{Animation};
 use engine::npc::{NPC, NPCSet};
 use engine::sprite::Action;
-use engine::types::{PSZ, TILE_SZ};
-use engine::types::{Rect, Vec2i};
+use engine::tiles::*;
+use engine::types::*;
 
 use std::fs::read_to_string;
 use std::collections::HashMap;
 use std::path::Path;
 use std::rc::Rc;
+
+pub fn map01() -> Tilemap {
+    let tilesheet = Rc::new(Image::from_file(std::path::Path::new(
+        "game/content/ts01.png",
+    )));
+    let solid = (0..96)
+        .map(|x| Tile { solid: !(x == 0 || x == 3 || x == 44 || x == 57) })
+        .collect::<Vec<Tile>>();
+    let tileset = Rc::new(Tileset::new(
+        solid,
+        tilesheet,
+    ));
+    Tilemap::from_csv(
+        Vec2i { x: PPOS.x - MOVE_SZ * START.x, y: PPOS.y - MOVE_SZ * START.y },
+        (56, 54),
+        tileset,
+        Path::new("game/content/tm01.csv"),
+        2,
+        vec![0, 3, 44, 57],
+    )
+}
 
 pub fn anims01() -> HashMap<Action, Rc<Animation>> {
     let mut animations: HashMap<Action, Rc<Animation>> = HashMap::new();
@@ -161,4 +182,25 @@ pub fn coords01(c: usize) -> Vec2i {
         }
     };
     Vec2i { x: TILE_SZ * coords.x, y: TILE_SZ * coords.y } // space (default)
+}
+
+pub fn map02() -> Tilemap {
+    let tilesheet = Rc::new(Image::from_file(std::path::Path::new(
+        "game/content/ts02.png",
+    )));
+    let solid = (0..96)
+        .map(|x| Tile { solid: !(x == 0 || x == 3 || x == 5 || x == 6) })
+        .collect::<Vec<Tile>>();
+    let tileset = Rc::new(Tileset::new(
+        solid,
+        tilesheet,
+    ));
+    Tilemap::from_csv(
+        Vec2i { x: PPOS.x - MOVE_SZ * START.x, y: PPOS.y - MOVE_SZ * START.y },
+        (56, 54),
+        tileset,
+        Path::new("game/content/tm02.csv"),
+        2,
+        vec![0, 3, 5, 6],
+    )
 }

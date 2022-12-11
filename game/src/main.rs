@@ -1,6 +1,5 @@
 mod world;
 
-use std::path::Path;
 use std::rc::Rc;
 
 use engine::animations::AnimationSet;
@@ -15,7 +14,10 @@ struct Assets {
 }
 
 struct State {
-    map: Tilemap,
+    maps: [Tilemap; 2],
+    level: usize,
+    swapping: bool,
+    swaplock: usize,
 
     anims: AnimationSet,
     sprite: Sprite,
@@ -31,7 +33,8 @@ struct State {
 }
 
 impl State {
-    pub fn new(map: Tilemap) -> Self {
+    pub fn new() -> Self {
+        let maps = [world::map01(), world::map02()];
         let anims = AnimationSet::new(
             "game/content/sp01ash.png", 
             world::anims01()
@@ -46,7 +49,10 @@ impl State {
         let textbox = Textbox::new(Rc::new(textset), "Hello world! This is a test. Plz work");
 
         Self {
-            map,
+            maps,
+            level: 0,
+            swapping: true,
+            swaplock: 64,
             anims,
             sprite,
             npcs,
@@ -63,12 +69,29 @@ impl State {
     }
 
     fn translate(&mut self) {
-        match self.cur_dir {
-            DOWN => self.map.translate_y(-1),
-            UP => self.map.translate_y(1),
-            LEFT => self.map.translate_x(1),
-            RIGHT => self.map.translate_x(-1),
-            _ => ()
+        for map in self.maps.iter_mut() {
+            map.translate(self.cur_dir);
+        }
+    }
+
+    fn circle_mask(&mut self) {
+        let tix = 2 * self.sprite.pos.x as usize;
+        let tiy = 2 * self.sprite.pos.y as usize;
+
+
+        for y in 0..6 {
+            match y {
+                0 | 5 => for x in 0..2 {
+                    self.maps[self.level].mask.unmask(tix + x, tiy - 2 + y);
+                },
+                1 | 4 => for x in 0..4 {
+                    self.maps[self.level].mask.unmask(tix - 1 + x, tiy - 2 + y);
+                },
+                2 | 3 => for x in 0..6 {
+                    self.maps[self.level].mask.unmask(tix - 2 + x, tiy - 2 + y);
+                },
+                _ => panic!("Something went wrong masking the map")
+            }
         }
     }
 }
@@ -143,9 +166,9 @@ fn update_state(s: &mut State, now_keys: &[bool], prev_keys: &[bool]) {
                 }
             };
     
-            if s.map.can_move_to(next_pos) && 
-               matches!(s.npcs.at(next_pos), None) && 
-               !s.is_text 
+            if !s.is_text && (
+               (s.maps[s.level].can_move_to(next_pos) && matches!(s.npcs.at(next_pos), None)) ||
+               (s.swapping && Tilemap::swap_can_move_to(next_pos)))
             {
                 s.sprite.pos.walk(s.cur_dir);
                 s.movec = 32;
@@ -178,7 +201,24 @@ fn update_state(s: &mut State, now_keys: &[bool], prev_keys: &[bool]) {
 
         if s.movec % 2 == 1 {
             s.translate();
+            if s.swapping {
+                s.circle_mask();
+            }
         }
+    }
+
+    // COMPLETE SWAP
+    if s.swapping && s.maps[s.level].swapc >= SWAPNUM && s.swaplock == 64 {
+        s.swaplock = 63;
+        s.maps[s.level].mask.unmask_rest();
+    }
+
+    if s.swaplock == 0 {
+        s.swaplock = 64;
+        s.level += 1;
+        s.swapping = false;
+    } else if s.swaplock < 64 {
+        s.swaplock -= 1;
     }
 }
 
@@ -194,36 +234,15 @@ impl engine::eng::Game for Game {
     type Assets = Assets;
     type State = State;
     fn new() -> (State, Assets) {
-        let tilesheet = Rc::new(Image::from_file(std::path::Path::new(
-            "game/content/ts01.png",
-        )));
         let spritesheet = Rc::new(Image::from_file(std::path::Path::new(
             "game/content/sp01ash.png",
         )));
-
-        let solid01 = (0..96)
-            .map(|x| Tile { solid: !(x == 0 || x == 3 || x == 44 || x == 57) })
-            .collect::<Vec<Tile>>();
-
-        let tileset = Rc::new(Tileset::new(
-            solid01,
-            tilesheet,
-        ));
-
-        let map = Tilemap::from_csv(
-            Vec2i { x: PPOS.x - MOVE_SZ * START.x, y: PPOS.y - MOVE_SZ * START.y },
-            (56, 54),
-            tileset,
-            Path::new("game/content/tm01.csv"),
-            2,
-            vec![0, 3, 44, 57],
-        );
 
         let assets = Assets {
             spritesheet,
         };
 
-        let state = State::new(map);
+        let state = State::new();
         (state, assets)
     }
 
@@ -232,8 +251,14 @@ impl engine::eng::Game for Game {
     }
 
     fn render(s: &mut State, assets: &mut Assets, fb2d: &mut Image) {
-        s.map.draw(fb2d);
+        if s.swapping {
+            s.maps[s.level+1].draw(fb2d);
+            s.maps[s.level].masked_draw(fb2d);
+        } else {
+            s.maps[s.level].draw(fb2d);
+        }
         s.npcs.draw(fb2d, s.sprite.pos, s.movec, s.cur_dir);
+        // draw_swap_circle(fb2d);
         render_player(s, assets, fb2d);
 
         if s.is_text {

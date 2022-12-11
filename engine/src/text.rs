@@ -147,7 +147,8 @@ impl Textbox {
                 r.push(line);
                 li = 0;
                 line = [0; 20];
-            } 
+            }
+             
             for (wi,c) in w.iter().enumerate() {
                 line[li + wi] = *c;
             }
