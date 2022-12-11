@@ -23,7 +23,6 @@ pub const START: Vec2i = Vec2i { x: 9, y: 10 };
 
 pub const TSPEED: usize = 4;
 
-pub const FADETIME: u8 = 64;
 pub const SWAPNUM: usize = 100; // 1428
 
 // TYPES
