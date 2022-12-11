@@ -1,4 +1,4 @@
-use crate::types::{DOWN, UP, LEFT, RIGHT, TILE_SZ, FADETIME};
+use crate::types::{DOWN, UP, LEFT, RIGHT, TILE_SZ};
 use crate::types::{Image, Rect, Vec2i};
 
 use core::panic;
@@ -58,37 +58,28 @@ impl Tileset {
 
 #[derive(PartialEq, Eq, Clone, Hash, Debug)]
 pub struct MapMask {
-    pub mask: Box<[u8]>,
+    pub mask: Box<[bool]>,
     pub dims: (usize, usize),
+    pub swapc: usize
 }
 
 impl MapMask {
     pub fn new(dims: (usize, usize)) -> Self {
         Self {
-            mask: vec![FADETIME; dims.0 * dims.1].into_boxed_slice(),
+            mask: vec![true; dims.0 * dims.1].into_boxed_slice(),
             dims,
+            swapc: 0
         }
     }
 
     pub fn unmask(&mut self, x: usize, y: usize) {
-        if self.mask[y * self.dims.0 + x] >= FADETIME {
-            self.mask[y * self.dims.0 + x] = FADETIME - 1;
-        } 
-    }
-
-    pub fn unmask_rest(&mut self) {
-        for y in 0..self.dims.1 {
-            for x in 0..self.dims.0 {
-                self.unmask(x, y);
-            }
+        if self.mask[y * self.dims.0 + x] {
+            self.mask[y * self.dims.0 + x] = false;
+            self.swapc += 1;
         }
     }
 
-    pub fn dec(&mut self, x: usize, y: usize) {
-        self.mask[y * self.dims.0 + x] -= 1;
-    }
-
-    pub fn at(&self, x: usize, y: usize) -> u8 {
+    pub fn at(&self, x: usize, y: usize) -> bool {
         self.mask[y * self.dims.0 + x]
     }
 }
@@ -269,25 +260,9 @@ impl Tilemap {
             for (x, id) in row.iter().enumerate() {
                 let xpx = (x * TILE_SZ as usize) as i32 + self.position.x;
                 let frame = self.tileset.get_rect(*id);
-                let mask_alpha = self.mask.at(x, y);
-                let mut new_tile = false;
-                if mask_alpha >= FADETIME {
+                if self.mask.at(x, y) {
                     screen.bitblt(&self.tileset.image, frame, Vec2i { x: xpx, y: ypx });
-                } else if mask_alpha > 0 {
-                    screen.draw_rect(
-                        &Rect { 
-                            pos: Vec2i { 
-                                x: TILE_SZ * x as i32 + self.position.x, 
-                                y: TILE_SZ * y as i32 + self.position.y 
-                            }, 
-                            sz: Vec2i { x: TILE_SZ, y: TILE_SZ } 
-                        }, 
-                        (128 + (2*mask_alpha), 255, 255, 255)
-                    );
-                    self.mask.dec(x, y);
-                    new_tile = mask_alpha == FADETIME - 1;
                 }
-                self.swapc += new_tile as usize;
             }
         }
     }
