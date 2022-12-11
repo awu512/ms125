@@ -4,21 +4,23 @@ use crate::types::{DOWN, UP, LEFT, RIGHT, PSZ};
 use crate::types::{Image, Rect, Vec2i};
 
 pub struct NPC {
-    row: i32,
+    pub id: i32,
     cur_dir: i32,
     def_dir: i32,
     pos: Vec2i,
-    pub text: String
+    pub text: String,
+    pub talked: bool
 }
 
 impl NPC {
-    pub fn new(row: i32, dir: i32, pos: Vec2i, text: String) -> Self {
+    pub fn new(id: i32, dir: i32, pos: Vec2i, text: String) -> Self {
         Self { 
-            row,
+            id,
             cur_dir: dir,
             def_dir: dir,
             pos,
-            text
+            text,
+            talked: false
         }
     }
 
@@ -39,11 +41,13 @@ impl NPC {
 
 pub struct NPCSet{
     image: Image,
-    dict: HashMap<Vec2i, NPC>
+    dict: HashMap<Vec2i, NPC>,
+    pub fin: bool,
+    pub fin_text: String
 }
 
 impl NPCSet {
-    pub fn new(path: &str, npcs: Vec<NPC>) -> Self {
+    pub fn new(path: &str, npcs: Vec<NPC>, fin_text: String) -> Self {
         let mut dict: HashMap<Vec2i, NPC> = HashMap::new();
         for npc in npcs {
             dict.insert(npc.pos, npc);
@@ -51,6 +55,8 @@ impl NPCSet {
         Self {
             image: Image::from_file(std::path::Path::new(path)),
             dict,
+            fin: false,
+            fin_text
         }
     }
 
@@ -66,7 +72,7 @@ impl NPCSet {
         for npc in self.dict.values() {
             fb2d.bitblt(
                 &self.image, 
-                Rect { pos: Vec2i { x: 16 * npc.cur_dir, y: 16 * npc.row }, sz: PSZ }, 
+                Rect { pos: Vec2i { x: 16 * npc.cur_dir, y: 16 * npc.id }, sz: PSZ }, 
                 sub_pos + Vec2i { 
                     x: 16 * (5 + npc.pos.x - ppos.x), 
                     y: 16 * (5 + npc.pos.y - ppos.y)
