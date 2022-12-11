@@ -135,7 +135,8 @@ pub fn npcs01() -> NPCSet {
 
     NPCSet::new(
         "game/content/npcs01.png",
-        npcs
+        npcs,
+        String::from("Looks like you've talked to everyone here in PALLET TOWN! Why don't you try walking around a bit?")
     )
 }
 
