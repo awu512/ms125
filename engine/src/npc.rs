@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::types::{DOWN, UP, LEFT, RIGHT, PSZ};
+use crate::types::{DOWN, UP, LEFT, RIGHT};
 use crate::types::{Image, Rect, Vec2i};
 
 pub struct NPC {
@@ -42,12 +42,13 @@ impl NPC {
 pub struct NPCSet{
     image: Image,
     dict: HashMap<Vec2i, NPC>,
+    pub npc_sz: Vec2i,
     pub fin: bool,
     pub fin_text: String
 }
 
 impl NPCSet {
-    pub fn new(path: &str, npcs: Vec<NPC>, fin_text: String) -> Self {
+    pub fn new(path: &str, npcs: Vec<NPC>, npc_sz: Vec2i, fin_text: String) -> Self {
         let mut dict: HashMap<Vec2i, NPC> = HashMap::new();
         for npc in npcs {
             dict.insert(npc.pos, npc);
@@ -55,6 +56,7 @@ impl NPCSet {
         Self {
             image: Image::from_file(std::path::Path::new(path)),
             dict,
+            npc_sz,
             fin: false,
             fin_text
         }
@@ -72,7 +74,7 @@ impl NPCSet {
         for npc in self.dict.values() {
             fb2d.bitblt(
                 &self.image, 
-                Rect { pos: Vec2i { x: 16 * npc.cur_dir, y: 16 * npc.id }, sz: PSZ }, 
+                Rect { pos: Vec2i { x: self.npc_sz.x * npc.cur_dir, y: self.npc_sz.y * npc.id }, sz: self.npc_sz }, 
                 sub_pos + Vec2i { 
                     x: 16 * (5 + npc.pos.x - ppos.x), 
                     y: 16 * (5 + npc.pos.y - ppos.y)

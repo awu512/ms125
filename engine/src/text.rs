@@ -41,7 +41,7 @@ pub struct Textbox {
 
 impl Textbox {
     pub fn new(textset: Rc<Textset>, text: &str) -> Self {
-        let base = (0usize..=7).map(|x| textset.get_rect(x)).collect::<Vec<Rect>>();
+        let base = (0usize..=9).map(|x| textset.get_rect(x)).collect::<Vec<Rect>>();
         let rows = Textbox::parse(text);
         Self {
             position: Vec2i { x: 0, y: HEIGHT as i32 - 48 },
@@ -52,6 +52,10 @@ impl Textbox {
             rptr: 1,
             cptr: 0
         }
+    }
+
+    pub fn set_base(&mut self, level: usize) {
+        self.base = (10*level..=(10*level+9)).map(|x| self.textset.get_rect(x)).collect::<Vec<Rect>>();
     }
 
     pub fn set_text(&mut self, text: &str) {
@@ -77,24 +81,26 @@ impl Textbox {
                 let xpx = (x * TILE_SZ as usize) as i32 + self.position.x;
 
                 let frame = match (x,y) {
-                    (0,0)        => self.base[1], // top right
-                    (W,0)        => self.base[2], // top left
-                    (W,H)        => self.base[3], // bottom left
-                    (0,H)        => self.base[4], // bottom right
-                    (_,0)|(_,H)  => self.base[5], // horizontal
-                    (0,_)|(W,_)  => self.base[6], // vertical
-                    (20,4)       => if !is_last { self.base[7] } else { self.base[0] },
-                    (_,2)        => if TSPEED*(x - 1) <= self.cptr { // top row
+                    (0,0)  => self.base[1], // top left
+                    (W,0)  => self.base[2], // top right
+                    (W,H)  => self.base[3], // bottom right
+                    (0,H)  => self.base[4], // bottom left
+                    (_,0)  => self.base[5], // top horizontal
+                    (_,H)  => self.base[6], // bottom horizontal
+                    (0,_)  => self.base[7], // left vertical
+                    (W,_)  => self.base[8], // right vertical
+                    (20,4) => if !is_last { self.base[9] } else { self.base[0] },
+                    (_,2)  => if TSPEED*(x - 1) <= self.cptr { // top row
                                         self.textset.get_rect(self.rows.get(self.rptr-1).unwrap()[x-1])
                                     } else { 
                                         self.base[0] 
                                     },
-                    (_,4)        => if TSPEED*(x + 19) <= self.cptr { // btm row
+                    (_,4)  => if TSPEED*(x + 19) <= self.cptr { // btm row
                                         self.textset.get_rect(self.rows.get(self.rptr).unwrap()[x-1])
                                     } else { 
                                         self.base[0] 
                                     },
-                    _            => self.base[0], // space
+                    _      => self.base[0], // space
                 };
 
                 screen.bitblt(&self.textset.image, frame, Vec2i { x: xpx, y: ypx });

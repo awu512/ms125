@@ -14,10 +14,10 @@ pub const LEFT: usize = 2;
 pub const RIGHT: usize = 3;
 pub const SPACE: usize = 4;
 
-pub const PSZ: Vec2i = Vec2i { x: 16, y: 16 };
+// pub const PSZ: Vec2i = Vec2i { x: 16, y: 16 };
 pub const PPOS: Vec2i = Vec2i { 
-    x: (WIDTH as i32 / 2) - (PSZ.x / 2), 
-    y: (HEIGHT as i32 / 2) - (PSZ.y / 2) 
+    x: (WIDTH as i32 / 2) - 8, 
+    y: (HEIGHT as i32 / 2) - 8 
 };
 pub const START: Vec2i = Vec2i { x: 9, y: 10 };
 

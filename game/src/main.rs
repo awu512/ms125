@@ -14,7 +14,7 @@ struct Assets {
 }
 
 struct State {
-    maps: [Tilemap; 2],
+    maps: [Tilemap; 3],
     level: usize,
 
     talkc: u8,
@@ -22,6 +22,7 @@ struct State {
 
     anims: AnimationSet,
     sprite: Sprite,
+    spritesheet: Rc<Image>,
 
     npcs: NPCSet,
 
@@ -35,27 +36,31 @@ struct State {
 
 impl State {
     pub fn new() -> Self {
-        let maps = [world::map01(), world::map02()];
+        let maps = [world::map01(), world::map02(), world::map03()];
         let anims = AnimationSet::new(
             "game/content/sp01ash.png", 
-            world::anims01()
+            world::anims(Vec2i { x: 16, y: 16 })
         );
         let sprite = Sprite {
             animation_state: anims.play_animation(Action::StandD),
             pos: START,
         };
+        let spritesheet = Rc::new(Image::from_file(std::path::Path::new(
+            "game/content/sp01ash.png",
+        )));
         let npcs = world::npcs01();
 
-        let textset = Textset::new("game/content/text01.png", world::coords01);
+        let textset = Textset::new("game/content/textsheet.png", world::text_coords);
         let textbox = Textbox::new(Rc::new(textset), "Hello world! This is a test. Plz work");
 
         Self {
             maps,
             level: 0,
-            talkc: 0,
+            talkc: 3,
             swapping: false,
             anims,
             sprite,
+            spritesheet,
             npcs,
             movec: 0,
             cur_dir: DOWN,
@@ -68,7 +73,36 @@ impl State {
     fn next_level(&mut self) {
         self.level += 1;
         self.swapping = false;
-        self.talkc = 0;
+        self.talkc = 3;
+
+        if self.level == 1 {
+            self.spritesheet = Rc::new(Image::from_file(std::path::Path::new(
+                "game/content/sp02ash.png",
+            )));
+            self.anims = AnimationSet::new(
+                "game/content/sp02ash.png", 
+                world::anims(Vec2i { x: 16, y: 16 })
+            );
+        } else if self.level == 2 {
+            self.spritesheet = Rc::new(Image::from_file(std::path::Path::new(
+                "game/content/sp03ash.png",
+            )));
+            self.anims = AnimationSet::new(
+                "game/content/sp03ash.png", 
+                world::anims(Vec2i { x: 16, y: 20 })
+            );
+        }
+
+        match self.cur_dir {
+            DOWN => self.anim(Action::StandD),
+            UP => self.anim(Action::StandU),
+            LEFT => self.anim(Action::StandL),
+            RIGHT => self.anim(Action::StandR),
+            _ => ()
+        }
+
+        self.textbox.set_base(self.level);
+        self.npcs = world::npcs(self.level);
     }
 
     fn anim(&mut self, act: Action) {
@@ -177,7 +211,7 @@ fn update_state(s: &mut State, now_keys: &[bool], prev_keys: &[bool]) {
                (s.maps[s.level].can_move_to(next_pos) && 
                matches!(s.npcs.at(next_pos), None)) ||
                ((Tilemap::swap_can_move_to(next_pos)) && 
-               s.swapping || !s.maps[s.level].can_move_to(s.sprite.pos)))
+               (s.swapping || !s.maps[s.level].can_move_to(s.sprite.pos))))
             {
                 s.sprite.pos.walk(s.cur_dir);
                 s.movec = 32;
@@ -186,7 +220,7 @@ fn update_state(s: &mut State, now_keys: &[bool], prev_keys: &[bool]) {
         }
 
         // INTERACT KEY (SPACE)
-        if now_keys[SPACE] && !prev_keys[SPACE] {
+        if now_keys[SPACE] && !prev_keys[SPACE] && !s.swapping {
             if let Some(npc) = s.npcs.at(next_pos) {
                 if s.is_text {
                     let more = s.textbox.scroll();
@@ -207,6 +241,7 @@ fn update_state(s: &mut State, now_keys: &[bool], prev_keys: &[bool]) {
                     s.is_text = !s.is_text;
                     if npc.id < 4 && !npc.talked {
                         s.talkc += 1;
+                        npc.talked = true;
                     }
                 }
             }
@@ -238,8 +273,8 @@ fn update_state(s: &mut State, now_keys: &[bool], prev_keys: &[bool]) {
 
 fn render_player(state: &mut State, assets: &mut Assets, fb2d: &mut Image) {
     fb2d.bitblt(
-        &assets.spritesheet,
-        state.sprite.play_animation(&20), // TODO: investigate speedup
+        &state.spritesheet,
+        state.sprite.play_animation(&20),
         PPOS,
     );
 }
@@ -270,9 +305,8 @@ impl engine::eng::Game for Game {
             s.maps[s.level].masked_draw(fb2d);
         } else {
             s.maps[s.level].draw(fb2d);
+            s.npcs.draw(fb2d, s.sprite.pos, s.movec, s.cur_dir);
         }
-        s.npcs.draw(fb2d, s.sprite.pos, s.movec, s.cur_dir);
-        // draw_swap_circle(fb2d);
         render_player(s, assets, fb2d);
 
         if s.is_text {
