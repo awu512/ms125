@@ -9,6 +9,14 @@ use std::collections::HashMap;
 use std::path::Path;
 use std::rc::Rc;
 
+pub fn open_text() -> String {
+    "The original POKéMON game was 512 kilobytes. That's a fraction of the size of the average photo on your phone. But those 512 kilobytes were the start of the highest grossing media franchise of all time.".into()
+}
+
+pub fn end_text() -> String {
+    "A cable, Godzilla, and bugs were the inspirations for an idea. Thousands of people developed that idea into a media empire. It wasn't by chance. If it ain't broke, don't fix it. That's what they say, right? The core gameplay of POKéMON is no different than it was in 1996. The idea was just so great that it holds up 25 years later. And the expansions of the franchise, the anime, the movies, the cards, the spinoffs, the mobile game, were well thought out extensions, not just quick and cheap money grabs. Sure, it was driven by money. Everything is. But alongside the obsession to make the content of this franchise profitable was a persistent obsession with making it well. After all, this did all start with a man and his desire to distill the joy of his childhood into something everyone could enjoy.".into()
+}
+
 pub fn anims(sz: Vec2i) -> HashMap<Action, Rc<Animation>> {
     let mut animations: HashMap<Action, Rc<Animation>> = HashMap::new();
 
@@ -255,7 +263,7 @@ pub fn npcs02() -> NPCSet {
         "game/content/npcs02.png",
         npcs,
         Vec2i { x: 16, y: 16 },
-        String::from("Looks like you've talked to everyone here in PALLET TOWN! Why don't you try walking around a bit?")
+        String::from("Oh, you've met everyone in NEW BARK TOWN. Walk around some more and I think you'll find new people to talk to!")
     )
 }
 
@@ -285,10 +293,10 @@ pub fn npcs03() -> NPCSet {
     let dlg: HashMap<String, String> = serde_json::from_str::<HashMap<String, String>>(&raw).unwrap();
 
     let npcs = vec![
-        NPC::new(0, 3, Vec2i { x: 16, y: 16 }, dlg["BOY1"].to_string()),
+        NPC::new(0, 3, Vec2i { x: 16, y: 16 }, dlg["BOYA"].to_string()),
         NPC::new(1, 0, Vec2i { x: 15,  y: 6  }, dlg["GIRL"].to_string()),
         NPC::new(2, 2, Vec2i { x: 6, y: 14 }, dlg["BIRCH"].to_string()),
-        NPC::new(3, 2, Vec2i { x: 18, y: 18 }, dlg["BOY2"].to_string()),
+        NPC::new(3, 2, Vec2i { x: 18, y: 18 }, dlg["BOYB"].to_string()),
         NPC::new(4, 0, Vec2i { x: 14,  y: 19 }, dlg["LSIGN"].to_string()),
         NPC::new(4, 0, Vec2i { x: 12, y: 11 }, dlg["HSIGN"].to_string()),
         NPC::new(4, 0, Vec2i { x: 18, y: 15 }, dlg["MSIGN"].to_string()),
@@ -299,6 +307,6 @@ pub fn npcs03() -> NPCSet {
         "game/content/npcs03.png",
         npcs,
         Vec2i { x: 16, y: 20 },
-        String::from("Looks like you've talked to everyone here in PALLET TOWN! Why don't you try walking around a bit?")
+        String::from("Well, that's everyone. Hope you enjoyed your time here in LITTLEROOT! Until next time*")
     )
 }

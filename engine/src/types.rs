@@ -14,7 +14,6 @@ pub const LEFT: usize = 2;
 pub const RIGHT: usize = 3;
 pub const SPACE: usize = 4;
 
-// pub const PSZ: Vec2i = Vec2i { x: 16, y: 16 };
 pub const PPOS: Vec2i = Vec2i { 
     x: (WIDTH as i32 / 2) - 8, 
     y: (HEIGHT as i32 / 2) - 8 
@@ -23,7 +22,9 @@ pub const START: Vec2i = Vec2i { x: 9, y: 10 };
 
 pub const TSPEED: usize = 4;
 
-pub const SWAPNUM: usize = 100; // 1428
+pub const SWAPNUM: usize = 50;
+
+pub const WIPENUM: i32 = 484;
 
 // TYPES
 pub type Color = (u8, u8, u8, u8);

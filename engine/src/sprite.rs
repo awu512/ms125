@@ -22,7 +22,8 @@ impl Action {
 #[allow(dead_code)]
 pub struct Sprite {
     pub animation_state: AnimationState,
-    pub pos: Vec2i
+    pub pos: Vec2i,
+    pub sz: Vec2i
 }
 
 impl Sprite {

@@ -71,13 +71,17 @@ impl NPCSet {
             _ => panic!("Invalid direction")
         };
 
+        let adj = if self.npc_sz.y > 16 { 2 } else { 0 };
+
         for npc in self.dict.values() {
             fb2d.bitblt(
                 &self.image, 
-                Rect { pos: Vec2i { x: self.npc_sz.x * npc.cur_dir, y: self.npc_sz.y * npc.id }, sz: self.npc_sz }, 
+                Rect { 
+                    pos: Vec2i { x: self.npc_sz.x * npc.cur_dir, y: self.npc_sz.y * npc.id }, sz: self.npc_sz 
+                }, 
                 sub_pos + Vec2i { 
                     x: 16 * (5 + npc.pos.x - ppos.x), 
-                    y: 16 * (5 + npc.pos.y - ppos.y)
+                    y: 16 * (5 + npc.pos.y - ppos.y) + adj
                 }
             );
         }

@@ -1,4 +1,4 @@
-use crate::types::{HEIGHT, TILE_SZ, TSPEED};
+use crate::types::{HEIGHT, TILE_SZ, TSPEED, WIPENUM};
 use crate::types::{Image, Rect, Vec2i};
 
 use std::rc::Rc;
@@ -40,15 +40,14 @@ pub struct Textbox {
 }
 
 impl Textbox {
-    pub fn new(textset: Rc<Textset>, text: &str) -> Self {
+    pub fn new(textset: Rc<Textset>) -> Self {
         let base = (0usize..=9).map(|x| textset.get_rect(x)).collect::<Vec<Rect>>();
-        let rows = Textbox::parse(text);
         Self {
             position: Vec2i { x: 0, y: HEIGHT as i32 - 48 },
             dims: (22, 6),
             textset,
             base,
-            rows,
+            rows: vec![],
             rptr: 1,
             cptr: 0
         }
@@ -166,5 +165,79 @@ impl Textbox {
             r.push([0; 20]);
         }
         r
+    }
+}
+
+pub struct Textscreen {
+    pub position: Vec2i,
+    textset: Rc<Textset>,
+    rows: Vec<[usize; 20]>,
+    rptr: usize,
+    pub cptr: usize,
+    pub animc: i32
+}
+
+impl Textscreen {
+    pub fn new(textset: Rc<Textset>, text: &str) -> Self {
+        let rows = Textbox::parse(text);
+        Self {
+            position: Vec2i { x: 0, y: HEIGHT as i32 - 48 },
+            textset,
+            rows,
+            rptr: 1,
+            cptr: 0,
+            animc: 242
+        }
+    }
+
+    pub fn set_text(&mut self, text: &str) {
+        self.cptr = 0;
+        self.rows = Textbox::parse(text);
+        self.rptr = 1;
+    }
+
+    pub fn scroll(&mut self) -> bool {
+        self.cptr = 0;
+        self.rptr += 2;
+        self.rptr < self.rows.len()
+    }
+
+    pub fn anim(&mut self, screen: &mut Image) {
+        for x in 0..22 {
+            for y in 0..22 {
+                if (WIPENUM - (22 * y + x)) < self.animc {
+                    screen.draw_rect(
+                        &Rect {
+                            pos: Vec2i { x: 8 * x, y: 8 * y },
+                            sz: Vec2i { x: 8, y: 8 }
+                        }, 
+                        (0,0,0,0)
+                    );
+                }
+            }
+        }
+    }
+
+    pub fn draw(&self, screen: &mut Image) {
+        screen.clear((0,0,0,0));
+        for x in 1..=20 {
+            let xpx = (x * TILE_SZ as usize) as i32 + self.position.x;
+
+            if TSPEED*(x - 1) <= self.cptr { // top row
+                screen.bitblt(
+                    &self.textset.image, 
+                    self.textset.get_rect(self.rows.get(self.rptr-1).unwrap()[x-1]), 
+                    Vec2i { x: xpx, y: 80 }
+                );
+            }
+
+            if TSPEED*(x + 19) <= self.cptr { // btm row
+                screen.bitblt(
+                    &self.textset.image, 
+                    self.textset.get_rect(self.rows.get(self.rptr).unwrap()[x-1]), 
+                    Vec2i { x: xpx, y: 88 }
+                );
+            }
+        }
     }
 }

@@ -1,16 +1,17 @@
 mod world;
 
+use std::process::exit;
 use std::rc::Rc;
 
 use engine::animations::AnimationSet;
 use engine::npc::NPCSet;
 use engine::sprite::{Action, Sprite};
-use engine::text::{Textbox, Textset};
+use engine::text::{Textbox, Textset, Textscreen};
 use engine::tiles::*;
 use engine::types::*;
 
 struct Assets {
-    spritesheet: Rc<Image>,
+    citation: Rc<Image>,
 }
 
 struct State {
@@ -31,7 +32,13 @@ struct State {
     next_dir: Option<usize>,
 
     is_text: bool,
-    textbox: Textbox
+    textbox: Textbox,
+
+    textscreen: Textscreen,
+    open: bool,
+    end: bool,
+    wipe_dir: i32,
+    cit: i32
 }
 
 impl State {
@@ -44,6 +51,7 @@ impl State {
         let sprite = Sprite {
             animation_state: anims.play_animation(Action::StandD),
             pos: START,
+            sz: Vec2i { x: 16, y: 16 }
         };
         let spritesheet = Rc::new(Image::from_file(std::path::Path::new(
             "game/content/sp01ash.png",
@@ -51,12 +59,15 @@ impl State {
         let npcs = world::npcs01();
 
         let textset = Textset::new("game/content/textsheet.png", world::text_coords);
-        let textbox = Textbox::new(Rc::new(textset), "Hello world! This is a test. Plz work");
+        let textbox = Textbox::new(Rc::new(textset));
+
+        let textset2 = Textset::new("game/content/textsheet2.png", world::text_coords);
+        let textscreen = Textscreen::new(Rc::new(textset2), &world::open_text());
 
         Self {
             maps,
             level: 0,
-            talkc: 3,
+            talkc: 0,
             swapping: false,
             anims,
             sprite,
@@ -66,14 +77,19 @@ impl State {
             cur_dir: DOWN,
             next_dir: None,
             is_text: false,
-            textbox
+            textbox,
+            textscreen,
+            open: true,
+            end: false,
+            wipe_dir: -1,
+            cit: -1,
         }
     }
 
     fn next_level(&mut self) {
         self.level += 1;
         self.swapping = false;
-        self.talkc = 3;
+        self.talkc = 0;
 
         if self.level == 1 {
             self.spritesheet = Rc::new(Image::from_file(std::path::Path::new(
@@ -91,6 +107,7 @@ impl State {
                 "game/content/sp03ash.png", 
                 world::anims(Vec2i { x: 16, y: 20 })
             );
+            self.sprite.sz = Vec2i { x: 16, y: 20 };
         }
 
         match self.cur_dir {
@@ -145,6 +162,59 @@ fn main() {
 
 // [Down, Up, Left, Right, Space]
 fn update_state(s: &mut State, now_keys: &[bool], prev_keys: &[bool]) {
+    // CITATIONS
+    #[allow(clippy::collapsible_if)]
+    if s.cit >= 0 {
+        if now_keys[SPACE] && !prev_keys[SPACE] {
+            if s.cit < 5 {
+                s.cit += 1;
+            } else {
+                exit(0) 
+            }
+        } 
+        return
+    }
+
+    // OPEN TEXT
+    #[allow(clippy::collapsible_if)]
+    if s.open {
+        if now_keys[SPACE] && !prev_keys[SPACE] {
+            if !s.textscreen.scroll() && s.open {
+                s.open = false;
+                s.textscreen.animc = WIPENUM - 1;
+            }
+        } 
+        if s.textscreen.cptr < 40 * TSPEED {
+            s.textscreen.cptr += 1;
+        }
+        return
+    }
+
+    // END TEXT
+    #[allow(clippy::collapsible_if)]
+    if s.end {
+        if now_keys[SPACE] && !prev_keys[SPACE] {
+            if !s.textscreen.scroll() && s.end {
+                s.cit = 0;
+                return
+            }
+        } 
+        if s.textscreen.cptr < 40 * TSPEED {
+            s.textscreen.cptr += 1;
+        }
+        return
+    }
+
+    if s.textscreen.animc == WIPENUM - 1 && s.level == 2 {
+        s.end = true;
+        s.textscreen.set_text(&world::end_text());
+        s.is_text = true;
+    }
+
+    if s.textscreen.animc < WIPENUM && s.textscreen.animc > 0 {
+        return
+    }
+
     // RELEASED -> clear next_dir
     if !now_keys[DOWN] && prev_keys[DOWN] && s.next_dir == Some(DOWN) {
         s.next_dir = None;
@@ -226,8 +296,14 @@ fn update_state(s: &mut State, now_keys: &[bool], prev_keys: &[bool]) {
                     let more = s.textbox.scroll();
                     if !more {
                         if s.npcs.fin {
-                            s.swapping = true;
                             s.is_text = false;
+                            if s.level == 2 {
+                                s.textscreen.animc = 1;
+                                s.wipe_dir = 1;
+                                return
+                            } else {
+                                s.swapping = true;
+                            }
                         } else if s.talkc >= 4 {
                             s.textbox.set_text(&s.npcs.fin_text);
                             s.npcs.fin = true;
@@ -275,7 +351,10 @@ fn render_player(state: &mut State, assets: &mut Assets, fb2d: &mut Image) {
     fb2d.bitblt(
         &state.spritesheet,
         state.sprite.play_animation(&20),
-        PPOS,
+        Vec2i {
+            x: (WIDTH as i32 / 2) - (state.sprite.sz.x / 2),
+            y: (HEIGHT as i32 / 2) - (state.sprite.sz.y / 2)
+        }
     );
 }
 
@@ -283,12 +362,12 @@ impl engine::eng::Game for Game {
     type Assets = Assets;
     type State = State;
     fn new() -> (State, Assets) {
-        let spritesheet = Rc::new(Image::from_file(std::path::Path::new(
-            "game/content/sp01ash.png",
+        let citation = Rc::new(Image::from_file(std::path::Path::new(
+            "game/content/citation.png",
         )));
 
         let assets = Assets {
-            spritesheet,
+            citation,
         };
 
         let state = State::new();
@@ -300,6 +379,23 @@ impl engine::eng::Game for Game {
     }
 
     fn render(s: &mut State, assets: &mut Assets, fb2d: &mut Image) {
+        if s.cit >= 0 {
+            fb2d.bitblt(
+                &assets.citation, 
+                Rect { 
+                    pos: Vec2i { x: 0, y: s.cit * 176 }, 
+                    sz: Vec2i { x: 176, y: 176 }
+                }, 
+                Vec2i { x: 0, y: 0 }
+            );
+            return
+        }
+
+        if s.open || s.end {
+            s.textscreen.draw(fb2d);
+            return
+        }
+
         if s.swapping {
             s.maps[s.level+1].draw(fb2d);
             s.maps[s.level].masked_draw(fb2d);
@@ -311,6 +407,11 @@ impl engine::eng::Game for Game {
 
         if s.is_text {
             s.textbox.draw(fb2d);
+        }
+
+        if s.textscreen.animc < WIPENUM && s.textscreen.animc > 0 {
+            s.textscreen.anim(fb2d);
+            s.textscreen.animc += s.wipe_dir;
         }
     }
 }
