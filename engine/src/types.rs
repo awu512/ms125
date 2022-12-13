@@ -22,7 +22,7 @@ pub const START: Vec2i = Vec2i { x: 9, y: 10 };
 
 pub const TSPEED: usize = 4;
 
-pub const SWAPNUM: usize = 50;
+pub const SWAPNUM: usize = 1400;
 
 pub const WIPENUM: i32 = 484;
 
