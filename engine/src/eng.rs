@@ -187,7 +187,7 @@ impl Vk {
         let surface = WindowBuilder::new()
             .with_resizable(false)
             .with_inner_size(win_size)
-            .with_title("Game")
+            .with_title("A Man and His Bugs")
             .build_vk_surface(&event_loop, instance.clone())
             .unwrap();
 
