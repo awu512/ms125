@@ -48,13 +48,13 @@ pub struct NPCSet{
 }
 
 impl NPCSet {
-    pub fn new(path: &str, npcs: Vec<NPC>, npc_sz: Vec2i, fin_text: String) -> Self {
+    pub fn new(path: &std::path::Path, npcs: Vec<NPC>, npc_sz: Vec2i, fin_text: String) -> Self {
         let mut dict: HashMap<Vec2i, NPC> = HashMap::new();
         for npc in npcs {
             dict.insert(npc.pos, npc);
         }
         Self {
-            image: Image::from_file(std::path::Path::new(path)),
+            image: Image::from_file(path),
             dict,
             npc_sz,
             fin: false,

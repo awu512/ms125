@@ -43,9 +43,12 @@ struct State {
 
 impl State {
     pub fn new() -> Self {
+        let exe_path = std::env::current_exe().unwrap();
+        let exe_dir = exe_path.parent().unwrap();
+
         let maps = [world::map01(), world::map02(), world::map03()];
         let anims = AnimationSet::new(
-            "game/content/sp01ash.png", 
+            exe_dir.join("content/sp01ash.png").as_path(), 
             world::anims(Vec2i { x: 16, y: 16 })
         );
         let sprite = Sprite {
@@ -53,15 +56,21 @@ impl State {
             pos: START,
             sz: Vec2i { x: 16, y: 16 }
         };
-        let spritesheet = Rc::new(Image::from_file(std::path::Path::new(
-            "game/content/sp01ash.png",
-        )));
+        let spritesheet = Rc::new(Image::from_file(
+            exe_dir.join("content/sp01ash.png").as_path()
+        ));
         let npcs = world::npcs01();
 
-        let textset = Textset::new("game/content/textsheet.png", world::text_coords);
+        let textset = Textset::new(
+            exe_dir.join("content/textsheet.png").as_path(),
+            world::text_coords
+        );
         let textbox = Textbox::new(Rc::new(textset));
 
-        let textset2 = Textset::new("game/content/textsheet2.png", world::text_coords);
+        let textset2 = Textset::new(
+            exe_dir.join("content/textsheet2.png").as_path(),
+            world::text_coords
+        );
         let textscreen = Textscreen::new(Rc::new(textset2), &world::open_text());
 
         Self {
@@ -91,20 +100,23 @@ impl State {
         self.swapping = false;
         self.talkc = 0;
 
+        let exe_path = std::env::current_exe().unwrap();
+        let exe_dir = exe_path.parent().unwrap();
+
         if self.level == 1 {
-            self.spritesheet = Rc::new(Image::from_file(std::path::Path::new(
-                "game/content/sp02ash.png",
-            )));
+            self.spritesheet = Rc::new(Image::from_file(
+                exe_dir.join("content/sp02ash.png").as_path()
+            ));
             self.anims = AnimationSet::new(
-                "game/content/sp02ash.png", 
+                exe_dir.join("content/sp02ash.png").as_path(), 
                 world::anims(Vec2i { x: 16, y: 16 })
             );
         } else if self.level == 2 {
-            self.spritesheet = Rc::new(Image::from_file(std::path::Path::new(
-                "game/content/sp03ash.png",
-            )));
+            self.spritesheet = Rc::new(Image::from_file(
+                exe_dir.join("content/sp03ash.png").as_path(),
+            ));
             self.anims = AnimationSet::new(
-                "game/content/sp03ash.png", 
+                exe_dir.join("content/sp03ash.png").as_path(), 
                 world::anims(Vec2i { x: 16, y: 20 })
             );
             self.sprite.sz = Vec2i { x: 16, y: 20 };
@@ -362,9 +374,12 @@ impl engine::eng::Game for Game {
     type Assets = Assets;
     type State = State;
     fn new() -> (State, Assets) {
-        let citation = Rc::new(Image::from_file(std::path::Path::new(
-            "game/content/citation.png",
-        )));
+        let exe_path = std::env::current_exe().unwrap();
+        let exe_dir = exe_path.parent().unwrap();
+
+        let citation = Rc::new(Image::from_file(
+            exe_dir.join("content/citation.png").as_path(),
+        ));
 
         let assets = Assets {
             citation,

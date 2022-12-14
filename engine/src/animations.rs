@@ -98,9 +98,9 @@ impl AnimationSet {
         self.image = image;
     }
 
-    pub fn new(path: &str, animations: HashMap<Action, Rc<Animation>>) -> Self {
+    pub fn new(path: &std::path::Path, animations: HashMap<Action, Rc<Animation>>) -> Self {
         AnimationSet {
-            image: Image::from_file(std::path::Path::new(path)),
+            image: Image::from_file(path),
             animations,
         }
     }

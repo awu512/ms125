@@ -180,9 +180,12 @@ pub fn npcs(level: usize) -> NPCSet {
 }
 
 pub fn map01() -> Tilemap {
-    let tilesheet = Rc::new(Image::from_file(std::path::Path::new(
-        "game/content/ts01.png",
-    )));
+    let exe_path = std::env::current_exe().unwrap();
+    let exe_dir = exe_path.parent().unwrap();
+
+    let tilesheet = Rc::new(Image::from_file(
+        exe_dir.join("content/ts01.png").as_path(),
+    ));
     let solid = (0..96)
         .map(|x| Tile { solid: !(x == 0 || x == 3 || x == 44 || x == 57) })
         .collect::<Vec<Tile>>();
@@ -194,14 +197,17 @@ pub fn map01() -> Tilemap {
         Vec2i { x: PPOS.x - MOVE_SZ * START.x, y: PPOS.y - MOVE_SZ * START.y },
         (56, 54),
         tileset,
-        Path::new("game/content/tm01.csv"),
+        exe_dir.join("content/tm01.csv").as_path(),
         2,
         vec![0, 3, 44, 57],
     )
 }
 
 pub fn npcs01() -> NPCSet {
-    let raw = read_to_string(Path::new("game/content/dlg01.json")).unwrap();
+    let exe_path = std::env::current_exe().unwrap();
+    let exe_dir = exe_path.parent().unwrap();
+
+    let raw = read_to_string(exe_dir.join("content/dlg01.json").as_path()).unwrap();
     let dlg: HashMap<String, String> = serde_json::from_str::<HashMap<String, String>>(&raw).unwrap();
 
     let npcs = vec![
@@ -216,7 +222,7 @@ pub fn npcs01() -> NPCSet {
     ];
 
     NPCSet::new(
-        "game/content/npcs01.png",
+        exe_dir.join("content/npcs01.png").as_path(),
         npcs,
         Vec2i { x: 16, y: 16 },
         String::from("Looks like you've talked to everyone here in PALLET TOWN! Why don't you walk around a bit?")
@@ -224,8 +230,11 @@ pub fn npcs01() -> NPCSet {
 }
 
 pub fn map02() -> Tilemap {
+    let exe_path = std::env::current_exe().unwrap();
+    let exe_dir = exe_path.parent().unwrap();
+
     let tilesheet = Rc::new(Image::from_file(std::path::Path::new(
-        "game/content/ts02.png",
+        exe_dir.join("content/ts02.png").as_path(),
     )));
     let solid = (0..96)
         .map(|x| Tile { solid: !(x == 0 || x == 3 || x == 5 || x == 6) })
@@ -238,14 +247,17 @@ pub fn map02() -> Tilemap {
         Vec2i { x: PPOS.x - MOVE_SZ * START.x, y: PPOS.y - MOVE_SZ * START.y },
         (56, 54),
         tileset,
-        Path::new("game/content/tm02.csv"),
+        exe_dir.join("content/tm02.csv").as_path(),
         2,
         vec![0, 3, 5, 6],
     )
 }
 
 pub fn npcs02() -> NPCSet {
-    let raw = read_to_string(Path::new("game/content/dlg02.json")).unwrap();
+    let exe_path = std::env::current_exe().unwrap();
+    let exe_dir = exe_path.parent().unwrap();
+
+    let raw = read_to_string(exe_dir.join("content/dlg02.json").as_path()).unwrap();
     let dlg: HashMap<String, String> = serde_json::from_str::<HashMap<String, String>>(&raw).unwrap();
 
     let npcs = vec![
@@ -260,7 +272,7 @@ pub fn npcs02() -> NPCSet {
     ];
 
     NPCSet::new(
-        "game/content/npcs02.png",
+        exe_dir.join("content/npcs02.png").as_path(),
         npcs,
         Vec2i { x: 16, y: 16 },
         String::from("Oh, you've met everyone in NEW BARK TOWN. Walk around some more and I think you'll find new people to talk to!")
@@ -268,8 +280,11 @@ pub fn npcs02() -> NPCSet {
 }
 
 pub fn map03() -> Tilemap {
+    let exe_path = std::env::current_exe().unwrap();
+    let exe_dir = exe_path.parent().unwrap();
+
     let tilesheet = Rc::new(Image::from_file(std::path::Path::new(
-        "game/content/ts03.png",
+        exe_dir.join("content/ts03.png").as_path(),
     )));
     let solid = (0..96)
         .map(|x| Tile { solid: x != 0 })
@@ -282,14 +297,17 @@ pub fn map03() -> Tilemap {
         Vec2i { x: PPOS.x - MOVE_SZ * START.x, y: PPOS.y - MOVE_SZ * START.y },
         (56, 54),
         tileset,
-        Path::new("game/content/tm03.csv"),
+        exe_dir.join("content/tm03.csv").as_path(),
         2,
         vec![0, 1, 2, 3, 34, 35, 36, 37, 70, 71, 72, 73, 74, 75, 104, 105, 106, 107, 108, 109],
     )
 }
 
 pub fn npcs03() -> NPCSet {
-    let raw = read_to_string(Path::new("game/content/dlg03.json")).unwrap();
+    let exe_path = std::env::current_exe().unwrap();
+    let exe_dir = exe_path.parent().unwrap();
+
+    let raw = read_to_string(exe_dir.join("content/dlg03.json").as_path()).unwrap();
     let dlg: HashMap<String, String> = serde_json::from_str::<HashMap<String, String>>(&raw).unwrap();
 
     let npcs = vec![
@@ -304,7 +322,7 @@ pub fn npcs03() -> NPCSet {
     ];
 
     NPCSet::new(
-        "game/content/npcs03.png",
+        exe_dir.join("content/npcs03.png").as_path(),
         npcs,
         Vec2i { x: 16, y: 20 },
         String::from("Well, that's everyone. Hope you enjoyed your time here in LITTLEROOT! Until next time*")

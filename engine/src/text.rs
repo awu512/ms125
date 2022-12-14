@@ -11,9 +11,9 @@ pub struct Textset {
 }
 
 impl Textset {
-    pub fn new(path: &str, get_coord: fn(usize) -> Vec2i) -> Self {
+    pub fn new(path: &std::path::Path, get_coord: fn(usize) -> Vec2i) -> Self {
         Self {
-            image: Rc::new(Image::from_file(std::path::Path::new(path))),
+            image: Rc::new(Image::from_file(path)),
             get_coord
         }
     }
